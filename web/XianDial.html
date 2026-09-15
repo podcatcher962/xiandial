@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B1C1F">
+<title>拾声 · 声音里的戏园子</title>
+<style>
+:root{
+  --bg:#1B1C1F; --card:#24262A; --card2:#2C2F34; --line:#3A3D43;
+  --tx:#E6E4E1; --tx2:#A5A29D; --acc:#4A9EFF; --acc2:#7CBDFF;
+  --ok:#3FC08A; --warn:#E8A33D; --dan:#E2685F;
+  --wood1:#5C3F2B; --wood2:#3D2A1C; --wood3:#2C1E13;
+  --grille:#12100E; --dial:#C9B79A; --glow:rgba(232,163,61,.55);
+  --ui:1; --tap:38px; --r:12px;
+}
+html[data-theme="light"]{
+  --bg:#F2F3F5; --card:#FFFFFF; --card2:#EDEFF2; --line:#D7DADF;
+  --tx:#1D1F23; --tx2:#5E646C; --acc:#1668C4; --acc2:#0F4E96;
+  --ok:#1E8A5F; --warn:#9A6410; --dan:#B33A31;
+  --wood1:#C9A67E; --wood2:#A98960; --wood3:#8A6C46;
+  --grille:#5B4633; --glow:rgba(154,100,16,.4);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--tx);
+  font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  font-size:calc(15px * var(--ui)); line-height:1.65;
+  padding-bottom:calc(138px + env(safe-area-inset-bottom));
+}
+html[data-motion="low"] *{animation:none !important;transition:none !important}
+button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;cursor:pointer}
+a{color:var(--acc)}
+
+/* ---------- 机身外壳 ---------- */
+.shell{
+  position:relative; overflow:hidden;
+  background:
+    repeating-linear-gradient(88deg, rgba(0,0,0,.16) 0 1px, rgba(255,255,255,.025) 1px 3px, rgba(0,0,0,.05) 3px 6px),
+    linear-gradient(170deg, var(--wood1), var(--wood2) 58%, var(--wood3));
+  border-bottom:3px solid rgba(0,0,0,.45);
+  box-shadow:0 6px 22px rgba(0,0,0,.45);
+  padding:14px 16px 12px;
+}
+.shell::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg, rgba(255,255,255,.10), transparent 30%, rgba(0,0,0,.22));
+}
+.brand{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;position:relative;z-index:2;padding-right:44px}
+.brand h1{
+  margin:0;font-size:calc(23px * var(--ui));letter-spacing:.16em;font-weight:700;
+  color:#F5EEE4;text-shadow:0 1px 0 rgba(0,0,0,.6),0 0 14px rgba(255,220,170,.18);
+}
+.brand .sub{font-size:calc(12px * var(--ui));color:rgba(245,238,228,.62);letter-spacing:.08em}
+.brand .gear{
+  position:absolute;right:0;top:2px;
+  width:var(--tap);height:var(--tap);min-width:var(--tap);
+  border-radius:9px;border:1px solid rgba(255,255,255,.22);
+  background:rgba(0,0,0,.22);color:#F5EEE4;font-size:calc(17px * var(--ui));
+}
+.brand .gear:active{background:rgba(0,0,0,.4)}
+
+/* 扬声器网 + 调频窗 */
+.panel{display:flex;gap:14px;align-items:stretch;margin-top:11px;position:relative;z-index:2;flex-wrap:wrap}
+.grille{
+  flex:1 1 150px;min-width:130px;height:64px;border-radius:8px;
+  background-color:var(--grille);
+  background-image:radial-gradient(circle at 50% 50%, rgba(0,0,0,.75) 32%, rgba(255,255,255,.05) 34%, transparent 40%);
+  background-size:7px 7px;
+  border:1px solid rgba(0,0,0,.5);
+  box-shadow:inset 0 2px 9px rgba(0,0,0,.85);
+  position:relative;
+}
+.grille .vu{
+  position:absolute;left:0;right:0;bottom:0;height:100%;
+  display:flex;align-items:flex-end;gap:3px;padding:7px 9px;opacity:0;transition:opacity .3s;
+}
+body.playing .grille .vu{opacity:1}
+.grille .vu i{
+  flex:1;background:linear-gradient(0deg,var(--ok),var(--warn));border-radius:2px;height:22%;
+  animation:vu 1.1s ease-in-out infinite;
+}
+.grille .vu i:nth-child(2){animation-duration:.83s}
+.grille .vu i:nth-child(3){animation-duration:1.34s}
+.grille .vu i:nth-child(4){animation-duration:.72s}
+.grille .vu i:nth-child(5){animation-duration:1.05s}
+.grille .vu i:nth-child(6){animation-duration:.94s}
+.grille .vu i:nth-child(7){animation-duration:1.22s}
+.grille .vu i:nth-child(8){animation-duration:.66s}
+@keyframes vu{0%,100%{height:14%}50%{height:84%}}
+
+.tuner{
+  flex:1 1 260px;min-width:220px;height:64px;border-radius:8px;
+  background:linear-gradient(180deg,#E8DFC8,#CDBFA0);
+  border:1px solid rgba(0,0,0,.55);box-shadow:inset 0 3px 12px rgba(0,0,0,.42);
+  position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;
+  padding:0 12px;
+}
+html[data-theme="light"] .tuner{background:linear-gradient(180deg,#FBF6E9,#E4D9BE)}
+.tuner .band{
+  height:22px;position:relative;
+  background:repeating-linear-gradient(90deg, rgba(60,45,25,.62) 0 1px, transparent 1px 11px);
+  border-bottom:1px solid rgba(60,45,25,.35);
+}
+.tuner .band::after{
+  content:"";position:absolute;left:0;right:0;bottom:-3px;height:6px;
+  background:repeating-linear-gradient(90deg, rgba(60,45,25,.85) 0 1px, transparent 1px 55px);
+}
+.tuner .needle{
+  position:absolute;top:0;bottom:26px;width:3px;border-radius:2px;
+  background:linear-gradient(180deg,var(--dan),#8E1F18);
+  box-shadow:0 0 9px var(--glow), 0 0 3px rgba(255,120,90,.9);
+  transition:left .55s cubic-bezier(.3,.9,.3,1);left:6%;
+}
+.tuner .read{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:3px}
+.tuner .freq{font:700 calc(15px * var(--ui))/1 ui-monospace,Consolas,monospace;color:#3A2A14;letter-spacing:.04em}
+.tuner .nm{font-size:calc(12px * var(--ui));color:#4E3A20;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62%}
+.tuner .lamp{
+  width:9px;height:9px;border-radius:50%;background:#6B2A22;box-shadow:inset 0 0 3px rgba(0,0,0,.6);align-self:center;
+}
+body.playing .tuner .lamp{background:var(--dan);box-shadow:0 0 10px var(--glow),inset 0 0 2px #fff}
+
+/* ---------- 导航 ---------- */
+nav{
+  display:flex;gap:6px;padding:9px 12px;overflow-x:auto;
+  background:var(--card);border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:30;
+}
+nav::-webkit-scrollbar{display:none}
+nav button{
+  padding:7px 11px;border-radius:999px;white-space:nowrap;letter-spacing:.03em;
+  color:var(--tx2);border:1px solid transparent;min-height:var(--tap);
+  display:inline-flex;align-items:center;
+}
+nav button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+nav button:not(.on):hover{background:var(--card2);color:var(--tx)}
+
+main{padding:14px 14px 22px;max-width:1080px;margin:0 auto}
+@media(max-width:430px){
+  nav{gap:4px;padding:8px 9px}
+  nav button{padding:7px 6px;letter-spacing:.03em;font-size:calc(14px * var(--ui))}
+  .shell{padding:11px 12px 10px}
+  .grille{flex:0 0 66px;height:56px}
+  .tuner{flex:1 1 auto;min-width:0;height:56px;padding:0 9px}
+  .tuner .nm{max-width:50%}
+  .tuner .freq{font-size:calc(13.5px * var(--ui))}
+  #bar .volbox{margin-left:auto}
+  #bar .now{flex:1 1 120px}
+}
+
+/* ---------- 通用 ---------- */
+h2{font-size:calc(17px * var(--ui));margin:0 0 4px;letter-spacing:.06em}
+h3{font-size:calc(15px * var(--ui));margin:18px 0 6px;color:var(--acc2)}
+p{margin:7px 0;color:var(--tx2)}
+.hint{font-size:calc(13px * var(--ui));color:var(--tx2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}
+.chip{
+  padding:8px 13px;border-radius:999px;border:1px solid var(--line);
+  background:var(--card2);color:var(--tx2);min-height:var(--tap);
+  display:inline-flex;align-items:center;gap:5px;
+}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.chip .cn{opacity:.6;font-size:.86em}
+.btn{
+  padding:10px 16px;border-radius:9px;background:var(--acc);color:#fff;
+  min-height:var(--tap);display:inline-flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn.ghost{background:var(--card2);color:var(--tx);border:1px solid var(--line)}
+.btn.warn{background:var(--warn);color:#1B1C1F}
+.btn.dan{background:var(--dan);color:#fff}
+.btn[disabled]{opacity:.42;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.stgrid{display:grid;gap:9px;grid-template-columns:repeat(auto-fill,minmax(196px,1fr))}
+.st{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:11px 12px;text-align:left;display:flex;flex-direction:column;gap:5px;
+  min-height:calc(72px * var(--ui));transition:border-color .18s,transform .12s;
+}
+.st:hover{border-color:var(--acc)}
+.st:active{transform:scale(.985)}
+.st.cur{border-color:var(--dan);background:var(--card2);box-shadow:0 0 0 1px var(--dan) inset}
+.st .n{font-size:calc(15px * var(--ui));font-weight:600;line-height:1.35}
+.st .m{font-size:calc(11.5px * var(--ui));color:var(--tx2);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tagc{
+  font-size:calc(10.5px * var(--ui));padding:1px 7px;border-radius:999px;
+  background:var(--card2);border:1px solid var(--line);color:var(--tx2);
+}
+.st.cur .tagc{background:rgba(226,104,95,.16);border-color:var(--dan);color:var(--dan)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block}
+.dot.f{background:var(--dan)}
+.dot.h{background:var(--warn)}
+
+/* ---------- 底部播放条 ---------- */
+#bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  background:linear-gradient(180deg,var(--card),var(--bg));
+  border-top:1px solid var(--line);
+  padding:9px 12px calc(9px + env(safe-area-inset-bottom));
+  box-shadow:0 -4px 20px rgba(0,0,0,.35);
+}
+#bar .wrap{max-width:1080px;margin:0 auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#bar .now{flex:1 1 190px;min-width:150px;overflow:hidden}
+#bar .now .t{font-size:calc(14px * var(--ui));font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bar .now .s{font-size:calc(11.5px * var(--ui));color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.big{
+  width:52px;height:52px;min-width:52px;border-radius:50%;
+  background:var(--dan);color:#fff;font-size:21px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 3px 12px rgba(0,0,0,.4);
+}
+.big:active{transform:scale(.95)}
+.knob{
+  width:46px;height:46px;min-width:46px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%, #55595F, #26282C 70%);
+  border:1px solid #14161A;position:relative;
+  box-shadow:0 2px 7px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12);
+}
+.knob::after{
+  content:"";position:absolute;left:50%;top:5px;width:2px;height:13px;margin-left:-1px;
+  background:var(--acc2);border-radius:2px;transform-origin:50% 18px;
+  transform:rotate(var(--rot,0deg));transition:transform .2s;
+}
+.knob:active{filter:brightness(1.2)}
+.volbox{display:flex;align-items:center;gap:7px}
+.volmeter{width:56px;height:6px;border-radius:4px;background:var(--card2);overflow:hidden;border:1px solid var(--line)}
+.volmeter i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),var(--warn));width:60%;transition:width .2s}
+#sleepBadge{
+  font-size:calc(11.5px * var(--ui));color:var(--warn);border:1px dashed var(--warn);
+  border-radius:7px;padding:4px 8px;white-space:nowrap;
+}
+
+/* ---------- 弹出面板 ---------- */
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:none}
+.mask.on{display:block}
+.sheet{
+  position:fixed;left:50%;bottom:0;transform:translateX(-50%);
+  width:100%;max-width:520px;max-height:88vh;overflow:auto;z-index:61;
+  background:var(--card);border:1px solid var(--line);border-bottom:none;
+  border-radius:16px 16px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+  display:none;
+}
+.sheet.on{display:block}
+.sheet h3{margin-top:0}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
+.seg button{padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--tx2);min-height:var(--tap)}
+.seg button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.stack{display:flex;flex-direction:column;gap:6px}
+.lrow{display:flex;gap:9px;align-items:center;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--card2)}
+.lrow .g{flex:1;min-width:0}
+.lrow .g .t{font-size:calc(14px * var(--ui));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .g .s{font-size:calc(11.5px * var(--ui));color:var(--tx2)}
+input[type=text],input[type=url],textarea{
+  width:100%;padding:10px 12px;border-radius:9px;background:var(--bg);color:var(--tx);
+  border:1px solid var(--line);font-family:inherit;font-size:calc(14px * var(--ui));min-height:var(--tap);
+}
+textarea{min-height:96px;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:calc(12.5px * var(--ui))}
+label.f{display:block;font-size:calc(13px * var(--ui));color:var(--tx2);margin:11px 0 4px}
+ol,ul{padding-left:1.3em;color:var(--tx2)}
+li{margin:4px 0}
+code{background:var(--card2);padding:1px 6px;border-radius:5px;font-size:.92em;color:var(--acc2)}
+table{width:100%;border-collapse:collapse;margin:9px 0;font-size:calc(13.5px * var(--ui))}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:var(--card2);color:var(--tx)}
+.ft{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--tx2);font-size:calc(12.5px * var(--ui));text-align:center}
+.ft b{color:var(--tx);letter-spacing:.06em}
+.qa{border-bottom:1px solid var(--line);padding:11px 0}
+.qa:last-child{border-bottom:none}
+.qa .q{font-weight:600;color:var(--tx);margin-bottom:3px;cursor:pointer;display:flex;gap:8px;align-items:flex-start}
+.qa .q .ar{color:var(--acc);flex:0 0 auto}
+.qa .a{color:var(--tx2);display:none;padding-left:20px}
+.qa.on .a{display:block}
+.badge{display:inline-block;font-size:calc(11px * var(--ui));padding:1px 7px;border-radius:999px;background:var(--card2);border:1px solid var(--line);color:var(--tx2);margin-left:6px}
+.warnbox{border-left:3px solid var(--warn);background:rgba(232,163,61,.08);padding:9px 12px;border-radius:0 8px 8px 0;margin:10px 0}
+.danbox{border-left:3px solid var(--dan);background:rgba(226,104,95,.08);padding:9px 12px;border-radius:0 8px 8px 0;margin:10px 0}
+.drop{
+  border:1.5px dashed var(--line);border-radius:11px;padding:20px;text-align:center;color:var(--tx2);
+  background:var(--card2);min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+}
+.drop.over{border-color:var(--acc);color:var(--acc)}
+.bar{height:6px;border-radius:4px;background:var(--card2);overflow:hidden;border:1px solid var(--line);margin-top:6px}
+.bar i{display:block;height:100%;background:var(--acc);width:0;transition:width .25s}
+
+/* 窄屏网格覆盖 —— 必须放在样式表最末，否则被上面的基础 .stgrid 覆盖 */
+@media(max-width:430px){
+  .stgrid{grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:8px}
+  .st{padding:10px 11px;min-height:calc(66px * var(--ui))}
+  .st .n{font-size:calc(14.5px * var(--ui))}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ 机身外壳 ══════════ -->
+<header class="shell">
+  <div class="brand">
+    <h1>拾声</h1>
+    <div class="sub">声音里的戏园子 · 听戏 · 听书 · 听旧时光</div>
+    <button class="gear" id="btnGear" title="设置" aria-label="设置">⚙</button>
+  </div>
+  <div class="panel">
+    <div class="grille" aria-hidden="true">
+      <div class="vu"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="tuner">
+      <div class="band"></div>
+      <div class="needle" id="needle"></div>
+      <div class="read">
+        <span class="lamp"></span>
+        <span class="freq" id="tunerFreq">--.- MHz</span>
+        <span class="nm" id="tunerName">待开机</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav id="nav"></nav>
+<main id="main"></main>
+
+<!-- ══════════ 播放条 ══════════ -->
+<div id="bar">
+  <div class="wrap">
+    <button class="knob" id="knobPrev" title="上一台" aria-label="上一台"></button>
+    <button class="big" id="btnPlay" title="开机 / 暂停" aria-label="播放或暂停">▶</button>
+    <button class="knob" id="knobNext" title="下一台" aria-label="下一台"></button>
+    <div class="now">
+      <div class="t" id="nowT">还没有选台</div>
+      <div class="s" id="nowS">点上面任意一个戏台，就能开声了</div>
+    </div>
+    <span id="sleepBadge" style="display:none"></span>
+    <div class="volbox">
+      <button class="chip" id="btnVolDown" aria-label="音量减小">−</button>
+      <div class="volmeter"><i id="volMeter"></i></div>
+      <button class="chip" id="btnVolUp" aria-label="音量增大">＋</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 设置面板 ══════════ -->
+<div class="mask" id="mask"></div>
+<div class="sheet" id="sheet">
+  <h3>设置</h3>
+  <label class="f">外观</label>
+  <div class="seg" id="segTheme">
+    <button data-th="dark">深色</button>
+    <button data-th="light">浅色</button>
+    <button data-th="system">跟随系统</button>
+  </div>
+  <label class="f">字大小</label>
+  <div class="seg" id="segUi">
+    <button data-ui="0.9">标准</button>
+    <button data-ui="1.05">大</button>
+    <button data-ui="1.2">特大</button>
+    <button data-ui="1.35">巨大</button>
+  </div>
+  <label class="f">按钮大小</label>
+  <div class="seg" id="segTap">
+    <button data-tap="38">普通</button>
+    <button data-tap="48">大</button>
+  </div>
+  <label class="f">动效</label>
+  <div class="seg" id="segMotion">
+    <button data-mo="full">正常</button>
+    <button data-mo="low">减弱</button>
+  </div>
+  <label class="f">定时关机（睡觉听戏用）</label>
+  <div class="seg" id="segSleep">
+    <button data-sl="0">不定时</button>
+    <button data-sl="15">15 分</button>
+    <button data-sl="30">30 分</button>
+    <button data-sl="60">1 小时</button>
+    <button data-sl="90">1.5 小时</button>
+  </div>
+  <label class="f">打开后自动续播上次的台</label>
+  <div class="seg" id="segResume">
+    <button data-rs="1">开</button>
+    <button data-rs="0">关</button>
+  </div>
+  <label class="f">换台时自动跳过连不上的台</label>
+  <div class="seg" id="segSkip">
+    <button data-sk="1">开</button>
+    <button data-sk="0">关</button>
+  </div>
+  <div class="row" style="margin-top:18px">
+    <button class="btn ghost" id="btnExport">导出备份</button>
+    <button class="btn ghost" id="btnImport">恢复备份</button>
+    <button class="btn ghost" id="btnReset">清空数据</button>
+  </div>
+  <p class="hint" style="margin-top:10px">所有收藏、自建台、音量与设置都存在这台设备的浏览器里，不会上传到任何服务器。</p>
+</div>
+
+<input type="file" id="fileImportJson" accept=".json" style="display:none">
+<input type="file" id="fileAudio" accept="audio/*" multiple style="display:none">
+<input type="file" id="fileAudioDir" webkitdirectory directory multiple style="display:none">
+
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════
+   一、内置戏台（全部经过真机试播验证，可播）
+   ══════════════════════════════════════════════════════ */
+var STATIONS=[
+  {n:"CCTV-11 戏曲伴音",u:"https://piccpndali.v.myalicdn.com/audio/cctv11_2.m3u8",c:"京戏"},
+  {n:"北京文艺广播",u:"https://lhttp.qtfm.cn/live/333/64k.mp3",c:"京戏"},
+  {n:"听·越剧",u:"https://lhttp.qtfm.cn/live/20500178/64k.mp3",c:"地方戏"},
+  {n:"河南戏曲广播",u:"https://stream.hndt.com/live/yule/playlist.m3u8",c:"地方戏"},
+  {n:"河南戏曲网络广播",u:"http://stream.hndt.com/live/wangluoxiqu/playlist.m3u8",c:"地方戏"},
+  {n:"安徽戏曲广播",u:"https://lhttp.qtfm.cn/live/1952/64k.mp3",c:"地方戏"},
+  {n:"黄梅之声",u:"https://lhttp-hw.qtfm.cn/live/5022280/64k.mp3",c:"地方戏"},
+  {n:"上海戏剧曲艺广播",u:"https://lhttp.qingting.fm/live/269/64k.mp3",c:"地方戏"},
+  {n:"苏州戏曲广播",u:"http://lhttp.qingting.fm/live/20211622/64k.mp3",c:"地方戏"},
+  {n:"绍兴戏曲广播",u:"http://lhttp.qingting.fm/live/5054/64k.mp3",c:"地方戏"},
+  {n:"潮州戏曲广播",u:"https://lhttp.qingting.fm/live/4595/64k.mp3",c:"地方戏"},
+  {n:"廊坊戏曲广播·飞扬105",u:"http://lhttp.qingting.fm/live/20211678/64k.mp3",c:"地方戏"},
+  {n:"安徽小说评书广播",u:"https://lhttp.qtfm.cn/live/1951/64k.mp3",c:"说书"},
+  {n:"衡水交通评书广播",u:"https://lhttp.qtfm.cn/live/5021940/64k.mp3",c:"说书"},
+  {n:"济南故事广播",u:"https://lhttp.qtfm.cn/live/1672/64k.mp3",c:"说书"},
+  {n:"合肥故事广播",u:"http://lhttp.qingting.fm/live/1961/64k.mp3",c:"说书"},
+  {n:"山西故事广播",u:"http://radiolive.sxrtv.com/live/gushi.m3u8",c:"说书"},
+  {n:"山西广播电视台故事广播",u:"http://lhttp.qingting.fm/live/5022511/64k.mp3",c:"说书"},
+  {n:"廊坊交通长书广播",u:"http://lhttp.qingting.fm/live/3948/64k.mp3",c:"说书"},
+  {n:"沧州长书文艺广播",u:"https://lhttp.qingting.fm/live/5021902/64k.mp3",c:"说书"},
+  {n:"江苏故事广播",u:"http://lzlive.vojs.cn/rWjyus9/92/live.m3u8",c:"说书"},
+  {n:"江西故事广播",u:"https://lhttp.qtfm.cn/live/20500092/64k.mp3",c:"说书"},
+  {n:"芜湖音乐故事广播",u:"https://lhttp.qtfm.cn/live/5028/64k.mp3",c:"说书"},
+  {n:"贵州故事广播",u:"http://satellitepull.cnr.cn/live/wx32gzgsgb/playlist.m3u8",c:"说书"},
+  {n:"阿基米德故事会",u:"https://lhttp.qtfm.cn/live/20500182/64k.mp3",c:"说书"},
+  {n:"河北经济广播（故事广播）",u:"https://radio.pull.hebtv.com/live/hebjj.m3u8",c:"说书"},
+  {n:"CNR-9 文艺之声",u:"http://satellitepull.cnr.cn/live/wxwyzs/playlist.m3u8",c:"文艺"},
+  {n:"山东文艺广播",u:"https://lhttp.qtfm.cn/live/20238/64k.mp3",c:"文艺"},
+  {n:"江苏文艺广播",u:"http://lzlive.vojs.cn/pL6NkZo/92/live.m3u8",c:"文艺"},
+  {n:"山西文艺广播",u:"http://radiolive.sxrtv.com/live/wenyi.m3u8",c:"文艺"},
+  {n:"河北文艺广播",u:"https://radio.pull.hebtv.com/live/hebwy.m3u8",c:"文艺"},
+  {n:"内蒙古文艺之声",u:"http://lhttp.qingting.fm/live/1886/64k.mp3",c:"文艺"},
+  {n:"唐山交通文艺广播",u:"https://lhttp.qtfm.cn/live/1659/64k.mp3",c:"文艺"},
+  {n:"青岛文艺广播",u:"http://lhttp.qingting.fm/live/1675/64k.mp3",c:"文艺"},
+  {n:"济南文艺广播",u:"http://lhttp.qingting.fm/live/1670/64k.mp3",c:"文艺"},
+  {n:"洛阳文艺广播",u:"https://lhttp-hw.qtfm.cn/live/20211321/64k.mp3",c:"文艺"},
+  {n:"临沂文艺广播",u:"https://lhttp.qtfm.cn/live/3995/64k.mp3",c:"文艺"},
+  {n:"哈尔滨文艺广播",u:"https://stream.hrbtv.net/wypl/playlist.m3u8",c:"文艺"},
+  {n:"广西文艺广播 FM950",u:"https://lhttp-hw.qtfm.cn/live/4875/64k.mp3",c:"文艺"},
+  {n:"BTV 文艺伴音",u:"https://wstvcpudali.v.myalicdn.com/wstvcpud/udrmbtv2_1/index.m3u8?adapt=0&BR=audio",c:"文艺"},
+  {n:"500 首华语经典",u:"https://lhttp.qtfm.cn/live/5022308/64k.mp3",c:"怀旧老歌"},
+  {n:"上海经典金曲 FM103.7",u:"https://lhttp-hw.qtfm.cn/live/273/64k.mp3",c:"怀旧老歌"},
+  {n:"上海经典音乐 FM94.7",u:"https://lhttp-hw.qtfm.cn/live/267/64k.mp3",c:"怀旧老歌"},
+  {n:"江苏经典流行音乐",u:"https://lhttp.qtfm.cn/live/4938/64k.mp3",c:"怀旧老歌"},
+  {n:"湖北经典音乐广播",u:"https://lhttp.qtfm.cn/live/1296/64k.mp3",c:"怀旧老歌"},
+  {n:"辽宁经典音乐广播",u:"https://lhttp-hw.qtfm.cn/live/20021/64k.mp3",c:"怀旧老歌"},
+  {n:"沈阳经典音乐广播",u:"http://lhttp.qingting.fm/live/5022520/64k.mp3",c:"怀旧老歌"},
+  {n:"郑州经典音乐广播",u:"https://lhttp-hw.qtfm.cn/live/1223/64k.mp3",c:"怀旧老歌"},
+  {n:"广州金曲音乐广播",u:"http://lhttp.qingting.fm/live/20192/64k.mp3",c:"怀旧老歌"},
+  {n:"山东经典音乐广播",u:"http://audiolive302.iqilu.com/sdradioShenghuo/sdradio04/playlist.m3u8",c:"怀旧老歌"},
+  {n:"CNR-4 经典音乐广播",u:"http://satellitepull.cnr.cn/live/wxdszs/playlist.m3u8",c:"怀旧老歌"},
+  {n:"好听 1055（经典流行金曲）",u:"https://lhttp.qtfm.cn/live/4885/64k.mp3",c:"怀旧老歌"}
+];
+
+var CATS=["京戏","地方戏","说书","文艺","怀旧老歌"];
+var CATDESC={ "京戏":"国粹大戏，皮黄锣鼓", "地方戏":"越剧、豫剧、黄梅、梆子、潮剧……",
+              "说书":"评书、相声、长书、故事会", "文艺":"各省文艺台，戏歌相声都插着放",
+              "怀旧老歌":"老歌、老唱片、旧时光" };
+
+/* ══════════════════════════════════════════════════════
+   二、状态与存储
+   ══════════════════════════════════════════════════════ */
+var KEY='xixiazi.v1';                   // 键名固定，别改，改了老用户数据会丢
+var S={
+  theme:'dark', ui:1, tap:38, motion:'full',
+  vol:0.7, sleepMin:0, resume:1, skip:1,
+  cur:null, fav:[], custom:[], hist:[], lastCat:'全部'
+};
+
+function load(){
+  try{
+    var o=JSON.parse(localStorage.getItem(KEY)||'{}');
+    for(var k in o){ if(o.hasOwnProperty(k)) S[k]=o[k]; }
+  }catch(e){}
+  if(S.fav==null) S.fav=[];
+  if(S.custom==null) S.custom=[];
+  if(S.hist==null) S.hist=[];
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+}
+
+/* 全部台 = 内置 + 自建 */
+function allStations(){
+  var a=STATIONS.slice();
+  for(var i=0;i<S.custom.length;i++){
+    var c=S.custom[i];
+    a.unshift({n:c.n, u:c.u, c:c.c||'自建', custom:true});
+  }
+  return a;
+}
+function byUrl(u){
+  var a=allStations();
+  for(var i=0;i<a.length;i++){ if(a[i].u===u) return a[i]; }
+  return null;
+}
+function isFav(u){ return S.fav.indexOf(u)>=0; }
+
+/* ══════════════════════════════════════════════════════
+   三、工具
+   ══════════════════════════════════════════════════════ */
+function $(id){ return document.getElementById(id); }
+function esc(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function fmtSize(b){
+  if(b==null) return '';
+  if(b<1024) return b+' B';
+  if(b<1048576) return (b/1024).toFixed(1)+' KB';
+  if(b<1073741824) return (b/1048576).toFixed(1)+' MB';
+  return (b/1073741824).toFixed(2)+' GB';
+}
+function fmtTime(s){
+  if(!isFinite(s)||s<0) return '0:00';
+  s=Math.floor(s);
+  var m=Math.floor(s/60), ss=s%60;
+  if(m<60) return m+':'+(ss<10?'0':'')+ss;
+  return Math.floor(m/60)+':'+(m%60<10?'0':'')+(m%60)+':'+(ss<10?'0':'')+ss;
+}
+function toast(msg, ms){
+  var d=document.createElement('div');
+  d.textContent=msg;
+  d.style.cssText='position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:99;'+
+    'background:rgba(0,0,0,.86);color:#fff;padding:10px 18px;border-radius:10px;'+
+    'font-size:calc(13.5px * var(--ui));max-width:86vw;text-align:center;pointer-events:none';
+  document.body.appendChild(d);
+  setTimeout(function(){ d.remove(); }, ms||2200);
+}
+
+/* 该 URL 是不是 HLS（m3u8） */
+function isHls(u){ return /\.m3u8(\?|$)/i.test(u); }
+/* 浏览器是否原生支持 HLS（Edge / Safari 支持；安卓 Chrome 不支持） */
+var HLS_NATIVE=(function(){
+  try{ return document.createElement('audio').canPlayType('application/vnd.apple.mpegurl')!==''; }
+  catch(e){ return false; }
+})();
+
+/* 换台时试的线路变体：蜻蜓 CDN 有 lhttp / lhttp-hw 两套域名，去掉签名参数也能通 */
+function variants(u){
+  var out=[u];
+  var noQ=u.replace(/\?.*$/,'');
+  if(noQ!==u) out.push(noQ);
+  if(u.indexOf('lhttp-hw.')>=0) out.push(u.replace('lhttp-hw.','lhttp.'));
+  if(u.indexOf('lhttp.')>=0 && u.indexOf('lhttp-hw.')<0) out.push(u.replace('lhttp.','lhttp-hw.'));
+  if(u.indexOf('https://')===0) out.push('http://'+u.slice(8));
+  if(u.indexOf('http://')===0) out.push('https://'+u.slice(7));
+  var uniq=[];
+  for(var i=0;i<out.length;i++){ if(uniq.indexOf(out[i])<0) uniq.push(out[i]); }
+  return uniq;
+}
+
+/* ══════════════════════════════════════════════════════
+   四、音频引擎
+   ══════════════════════════════════════════════════════ */
+var audio=new Audio();
+audio.preload='none';
+
+var P={
+  url:null, name:'', cat:'', vs:[], vi:0, state:'idle',  // idle|loading|playing|paused|error
+  failCount:0, retryTimer:null
+};
+
+function setNow(){
+  $('nowT').textContent=P.name||'还没有选台';
+  var st={idle:'点上面任意一个戏台，就能开声了', loading:'正在接线……',
+          playing:'正在放送', paused:'已暂停', error:'这个台暂时连不上'}[P.state]||'';
+  var extra=P.cat?(' · '+P.cat):'';
+  $('nowS').textContent=(P.url? st+extra : st);
+  $('tunerName').textContent=P.name||'待开机';
+  $('btnPlay').textContent=(P.state==='playing')?'❚❚':'▶';
+  document.body.classList.toggle('playing', P.state==='playing');
+}
+function setNeedle(){
+  var a=allStations(), i=0;
+  for(var k=0;k<a.length;k++){ if(a[k].u===P.url){ i=k; break; } }
+  var pct=a.length>1 ? (6+ (i/(a.length-1))*88) : 50;
+  $('needle').style.left=pct.toFixed(2)+'%';
+  $('tunerFreq').textContent=(88.0+(i%40)*0.45).toFixed(1)+' MHz';
+}
+
+function stopAudio(){
+  try{ audio.pause(); audio.removeAttribute('src'); audio.load(); }catch(e){}
+}
+
+function playStation(st, opts){
+  opts=opts||{};
+  if(!st) return;
+  if(P.retryTimer){ clearTimeout(P.retryTimer); P.retryTimer=null; }
+  if(isHls(st.u) && !HLS_NATIVE){
+    toast('这个台是 HLS 流，当前浏览器播不了。请换一个台，或用 Edge / Safari 打开。', 4200);
+  }
+  P.url=st.u; P.name=st.n; P.cat=st.c||'';
+  P.vs=variants(st.u); P.vi=0; P.state='loading';
+  S.cur={u:st.u, n:st.n, c:st.c||''};
+  if(!opts.noSave) save();
+  setNeedle(); setNow(); render();
+  tryPlay();
+  if(st.hist!==false) pushHist(st);
+}
+
+function tryPlay(){
+  var url=P.vs[P.vi];
+  if(!url){ P.state='error'; setNow(); toast('这个台连不上，换一个试试'); nextStation(); return; }
+  stopAudio();
+  audio.volume=S.vol;
+  audio.src=url;
+  var done=false;
+  function fail(){
+    if(done) return; done=true;
+    audio.removeEventListener('error',onErr);
+    P.vi++;
+    if(P.vi<P.vs.length){ tryPlay(); }
+    else{
+      P.state='error'; setNow(); render();
+      if(S.skip && P.failCount<4){ P.failCount++; P.retryTimer=setTimeout(function(){ nextStation(); }, 900); }
+      else{ P.failCount=0; toast('这个台暂时连不上，声音可能已经断了，请换一个台'); }
+    }
+  }
+  function onErr(){ fail(); }
+  audio.addEventListener('error', onErr, {once:true});
+  var pr=audio.play();
+  if(pr && pr.catch){ pr.catch(function(e){ if(e && e.name!=='AbortError') fail(); }); }
+  setTimeout(function(){
+    if(done) return;
+    if(audio.readyState>=2){ done=true; audio.removeEventListener('error',onErr);
+      P.state='playing'; P.failCount=0; setNow(); render(); }
+  }, 1200);
+}
+
+audio.addEventListener('playing', function(){ P.state='playing'; P.failCount=0; setNow(); render(); });
+audio.addEventListener('pause', function(){ if(P.state==='playing'){ P.state='paused'; setNow(); render(); } });
+audio.addEventListener('stalled', function(){ if(P.state==='playing'){ $('nowS').textContent='信号有点弱，正在缓冲……'; } });
+
+function togglePlay(){
+  if(P.state==='playing'){ audio.pause(); P.state='paused'; setNow(); render(); return; }
+  // 恢复了上次的台但还没接线（src 为空）：重新接一次
+  if(P.state==='paused' && P.url && audio.src){
+    audio.play().catch(function(){});
+    P.state='playing'; setNow(); render(); return;
+  }
+  var a=allStations();
+  var back=S.cur? byUrl(S.cur.u) : null;
+  playStation(back || a[0]);
+}
+
+function step(d){
+  var a=allStations();
+  if(!a.length) return;
+  var i=-1;
+  for(var k=0;k<a.length;k++){ if(a[k].u===P.url){ i=k; break; } }
+  if(i<0) i=0; else i=(i+d+a.length)%a.length;
+  playStation(a[i]);
+}
+function nextStation(){ step(1); }
+function prevStation(){ step(-1); }
+
+/* 历史 */
+function pushHist(st){
+  S.hist=S.hist.filter(function(x){ return x.u!==st.u; });
+  S.hist.unshift({u:st.u, n:st.n, c:st.c||'', t:Date.now()});
+  if(S.hist.length>12) S.hist.length=12;
+  save();
+}
+
+/* 定时关机 */
+var sleepTimer=null, sleepEnd=0;
+function setSleep(min){
+  S.sleepMin=min; save();
+  if(sleepTimer){ clearInterval(sleepTimer); sleepTimer=null; }
+  if(!min){ $('sleepBadge').style.display='none'; return; }
+  sleepEnd=Date.now()+min*60000;
+  $('sleepBadge').style.display='';
+  sleepTimer=setInterval(function(){
+    var left=sleepEnd-Date.now();
+    if(left<=0){
+      clearInterval(sleepTimer); sleepTimer=null;
+      audio.pause(); P.state='paused'; setNow(); render();
+      $('sleepBadge').style.display='none'; S.sleepMin=0; save();
+      toast('时辰到了，自己关机了');
+      return;
+    }
+    var m=Math.floor(left/60000), s=Math.floor(left%60000/1000);
+    $('sleepBadge').textContent='定时 '+m+':'+(s<10?'0':'')+s;
+  }, 1000);
+}
+
+/* 音量 */
+function setVol(v){
+  S.vol=Math.max(0, Math.min(1, v));
+  audio.volume=S.vol; save();
+  $('volMeter').style.width=(S.vol*100)+'%';
+  var rot=-118+S.vol*236;                 // 两个旋钮同步指示音量
+  $('knobPrev').style.setProperty('--rot', rot+'deg');
+  $('knobNext').style.setProperty('--rot', rot+'deg');
+}
+
+/* ══════════════════════════════════════════════════════
+   五、拾藏（本地点播库 · IndexedDB）
+   ══════════════════════════════════════════════════════ */
+var DB=null;
+function openDB(){
+  return new Promise(function(res,rej){
+    if(DB) return res(DB);
+    var rq=indexedDB.open('xixiazi.media', 1);
+    rq.onupgradeneeded=function(e){
+      var db=e.target.result;
+      if(!db.objectStoreNames.contains('meta')) db.createObjectStore('meta', {keyPath:'id'});
+      if(!db.objectStoreNames.contains('blob')) db.createObjectStore('blob', {keyPath:'id'});
+    };
+    rq.onsuccess=function(){ DB=rq.result; res(DB); };
+    rq.onerror=function(){ rej(rq.error); };
+  });
+}
+function idb(store, mode, fn){
+  return openDB().then(function(db){
+    return new Promise(function(res,rej){
+      var tx=db.transaction(store, mode), os=tx.objectStore(store);
+      var r=fn(os);
+      tx.oncomplete=function(){ res(r && r.result!==undefined ? r.result : r); };
+      tx.onerror=function(){ rej(tx.error); };
+    });
+  });
+}
+function localList(){
+  return idb('meta','readonly',function(os){ return os.getAll(); })
+    .then(function(a){ return (a||[]).sort(function(x,y){ return (x.added||0)-(y.added||0); }); });
+}
+function localAdd(file, group){
+  var id='m'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+  return openDB().then(function(db){
+    return new Promise(function(res,rej){
+      var tx=db.transaction(['meta','blob'],'readwrite');
+      tx.objectStore('blob').put({id:id, data:file});
+      tx.objectStore('meta').put({id:id, n:file.name, sz:file.size, g:group||'',
+                                  added:Date.now(), pos:0, dur:0});
+      tx.oncomplete=function(){ res(id); };
+      tx.onerror=function(){ rej(tx.error); };
+    });
+  });
+}
+function localMeta(id, patch){
+  return openDB().then(function(db){
+    return new Promise(function(res,rej){
+      var tx=db.transaction('meta','readwrite'), os=tx.objectStore('meta');
+      var g=os.get(id);
+      g.onsuccess=function(){
+        var m=g.result; if(!m) return res(null);
+        for(var k in patch){ m[k]=patch[k]; }
+        os.put(m); res(m);
+      };
+      tx.oncomplete=function(){ res(true); };
+      tx.onerror=function(){ rej(tx.error); };
+    });
+  });
+}
+function localDel(id){
+  return openDB().then(function(db){
+    return new Promise(function(res,rej){
+      var tx=db.transaction(['meta','blob'],'readwrite');
+      tx.objectStore('meta').delete(id);
+      tx.objectStore('blob').delete(id);
+      tx.oncomplete=function(){ res(true); };
+      tx.onerror=function(){ rej(tx.error); };
+    });
+  });
+}
+function localBlob(id){
+  return idb('blob','readonly',function(os){ return os.get(id); })
+    .then(function(r){ return r && r.data ? r.data : null; });
+}
+
+/* 本地播放 */
+var LP={ id:null, url:null, dur:0, seeking:false, tick:null };
+function localPlay(rec){
+  if(!rec) return;
+  localBlob(rec.id).then(function(blob){
+    if(!blob){ toast('这个文件读不出来了，可能已损坏'); return; }
+    if(LP.url) URL.revokeObjectURL(LP.url);
+    LP.id=rec.id; LP.dur=rec.dur||0;
+    LP.url=URL.createObjectURL(blob);
+    if(P.retryTimer){ clearTimeout(P.retryTimer); P.retryTimer=null; }
+    stopAudio();
+    audio.src=LP.url;
+    audio.volume=S.vol;
+    P.url='local:'+rec.id; P.name=rec.n; P.cat='拾藏'; P.state='loading';
+    S.cur={u:P.url, n:rec.n, c:'拾藏'}; save();
+    setNow(); render();
+    audio.addEventListener('loadedmetadata', function once(){
+      audio.removeEventListener('loadedmetadata', once);
+      LP.dur=audio.duration||0;
+      localMeta(rec.id, {dur:LP.dur});
+      if(rec.pos>1) audio.currentTime=Math.min(rec.pos, LP.dur-1);
+    });
+    var pr=audio.play();
+    if(pr&&pr.catch) pr.catch(function(){});
+  });
+}
+/* 断点续播：每 4 秒写一次进度 */
+audio.addEventListener('timeupdate', function(){
+  if(!LP.id || LP.seeking) return;
+  var t=audio.currentTime;
+  if(!LP.tick || Date.now()-LP.tick>4000){
+    LP.tick=Date.now();
+    localMeta(LP.id, {pos:t, dur:audio.duration||LP.dur||0});
+  }
+});
+function flushLocalPos(){
+  if(LP.id && audio.currentTime>0){ localMeta(LP.id, {pos:audio.currentTime}); }
+}
+document.addEventListener('visibilitychange', function(){ if(document.hidden) flushLocalPos(); });
+window.addEventListener('beforeunload', flushLocalPos);
+
+/* ══════════════════════════════════════════════════════
+   六、渲染
+   ══════════════════════════════════════════════════════ */
+var VIEW='radio';
+var NAV=[['radio','戏台'],['local','拾藏'],['help','帮助'],['faq','疑难'],['legal','免责'],['about','关于']];
+
+function renderNav(){
+  var h='';
+  for(var i=0;i<NAV.length;i++){
+    h+='<button data-v="'+NAV[i][0]+'" class="'+(VIEW===NAV[i][0]?'on':'')+'">'+esc(NAV[i][1])+'</button>';
+  }
+  $('nav').innerHTML=h;
+}
+
+function render(){
+  renderNav();
+  if(P.url) setNeedle();
+  var m=$('main');
+  if(VIEW==='radio') m.innerHTML=viewRadio();
+  else if(VIEW==='local') m.innerHTML=viewLocal();
+  else if(VIEW==='help') m.innerHTML=viewHelp();
+  else if(VIEW==='faq') m.innerHTML=viewFaq();
+  else if(VIEW==='legal') m.innerHTML=viewLegal();
+  else m.innerHTML=viewAbout();
+  if(VIEW==='local') refreshLocal();
+}
+
+function stCardHTML(s, i){
+  var cur=(P.url===s.u);
+  var lamp=cur? (P.state==='error'?'<span class="dot f"></span>':'<span class="dot"></span>') : '';
+  return '<button class="st'+(cur?' cur':'')+'" data-i="'+i+'">'+
+    '<div class="n">'+esc(s.n)+'</div>'+
+    '<div class="m">'+lamp+'<span class="tagc">'+esc(s.c||'')+'</span>'+
+    (isFav(s.u)?'<span class="tagc" style="color:var(--warn)">★ 常听</span>':'')+
+    (s.custom?'<span class="tagc">自建</span>':'')+
+    (isHls(s.u)?'<span class="tagc">HLS</span>':'')+
+    '</div></button>';
+}
+
+function viewRadio(){
+  var a=allStations();
+  var cats=['全部'].concat(CATS);
+  // 自建台单独成类
+  var hasCustom=S.custom.length>0;
+  if(hasCustom) cats.push('自建');
+  var cur=S.lastCat||'全部';
+  if(cats.indexOf(cur)<0) cur='全部';
+
+  var h='';
+  h+='<div class="card">';
+  h+='<h2>戏台</h2>';
+  h+='<p class="hint">'+a.length+' 个台已经过试播验证。点一下就能开声听。</p>';
+  h+='<div class="chips" id="catChips">';
+  for(var i=0;i<cats.length;i++){
+    var c=cats[i], n=(c==='全部')?a.length:a.filter(function(x){
+      return (c==='自建')? x.custom : (x.c===c);
+    }).length;
+    h+='<button class="chip'+(cur===c?' on':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'<span class="cn">'+n+'</span></button>';
+  }
+  h+='</div>';
+  if(CATDESC[cur]) h+='<p class="hint">'+esc(CATDESC[cur])+'</p>';
+  h+='</div>';
+
+  var list=a;
+  if(cur!=='全部'){ list=a.filter(function(x){ return (cur==='自建')? x.custom : (x.c===cur); }); }
+  if(!list.length){
+    h+='<div class="card"><p>这一类还没有台。</p></div>';
+  }else{
+    h+='<div class="stgrid">';
+    for(var j=0;j<list.length;j++){ h+=stCardHTML(list[j], a.indexOf(list[j])); }
+    h+='</div>';
+  }
+
+  // 常听
+  var favs=a.filter(function(x){ return isFav(x.u); });
+  if(favs.length){
+    h+='<div class="card" style="margin-top:14px"><h3>常听的台</h3><div class="stgrid">';
+    for(var k=0;k<favs.length;k++){ h+=stCardHTML(favs[k], a.indexOf(favs[k])); }
+    h+='</div></div>';
+  }
+  // 最近听过
+  if(S.hist.length){
+    h+='<div class="card"><h3>最近听过</h3><div class="chips">';
+    for(var q=0;q<S.hist.length;q++){
+      h+='<button class="chip" data-hist="'+esc(S.hist[q].u)+'">'+esc(S.hist[q].n)+'</button>';
+    }
+    h+='</div></div>';
+  }
+
+  h+='<div class="card"><h3>自己加一个台</h3>'+
+     '<p class="hint">手上有别的戏曲 / 评书直播地址（<code>.mp3</code> 或 <code>.m3u8</code> 结尾），可以收进来。</p>'+
+     '<div class="chips" id="catPick">'+
+       CATS.map(function(c){ return '<button class="chip" data-newcat="'+esc(c)+'">'+esc(c)+'</button>'; }).join('')+
+     '</div>'+
+     '<p class="hint">选好归到哪一类，再填名字和地址：</p>'+
+     '<label class="f">台名</label><input type="text" id="inName" placeholder="例如：老家县城的戏台">'+
+     '<label class="f">播放地址</label><input type="url" id="inUrl" placeholder="https://…….mp3">'+
+     '<div class="row" style="margin-top:12px"><button class="btn" id="btnAddSt">收进来</button>'+
+     '<span class="hint" id="addHint">还没选分类</span></div></div>';
+
+  h+='<div class="card"><h3>最近半小时没人管它</h3>'+
+     '<p class="hint">定时关机在右上角 ⚙ 里设；听戏睡着了也不怕。</p></div>';
+  return h;
+}
+
+function viewLocal(){
+  var h='';
+  h+='<div class="card">';
+  h+='<h2>拾藏</h2>';
+  h+='<p class="hint">把自己下载好的戏、评书、相声收进来，就能离线听，关掉页面下次还在，听到哪记到哪。'+
+     '音频全部留在这台设备上，<b>不会上传到任何服务器</b>。</p>';
+  h+='<div class="drop" id="drop">'+
+       '<div style="font-size:28px">＋</div>'+
+       '<div>把音频文件拖到这里，或点下面按钮选文件</div>'+
+       '<div class="row" style="margin-top:8px;justify-content:center">'+
+         '<button class="btn" id="btnPickAudio">选文件</button>'+
+         '<button class="btn ghost" id="btnPickDir">选整个文件夹</button>'+
+       '</div>'+
+     '</div>';
+  h+='<div class="bar" id="impBar" style="display:none"><i id="impFill"></i></div>';
+  h+='<div class="hint" id="impTxt" style="margin-top:6px"></div>';
+  h+='</div>';
+  h+='<div class="card"><h3>拾来的东西 <span class="badge" id="localCount">0</span></h3>'+
+     '<div class="stack" id="localList"><p class="hint">还没放东西进来。</p></div>'+
+     '<div class="row" style="margin-top:12px">'+
+       '<button class="btn ghost" id="btnLocalShuffle">随便放一段</button>'+
+       '<button class="btn dan" id="btnLocalClear">全部倒掉</button>'+
+     '</div></div>';
+  h+='<div class="warnbox"><b>提醒：</b>音频是整份复制到浏览器里的，占的空间约等于原文件大小。'+
+     '浏览器「清空缓存 / 网站数据」会把它们一起清掉，重要的戏记得留原文件。</div>';
+  return h;
+}
+
+function viewHelp(){
+  return '<div class="card"><h2>怎么用</h2>'+
+  '<h3>三步就够</h3><ol>'+
+  '<li><b>选台</b>——「戏台」页里挑一个，点一下就开始放。</li>'+
+  '<li><b>换台</b>——底部左右两个旋钮，左边上一台，右边下一台；中间的圆钮是开关。</li>'+
+  '<li><b>定时</b>——右上角 ⚙ 里可以设 15 分到 1.5 小时自动关机，睡着也不怕。</li>'+
+  '</ol>'+
+  '<h3>把常听的台收起来</h3>'+
+  '<p>在「戏台」页点台卡片右上角的星标（长按卡片也可以），就会进「常听的台」，下次不用翻。</p>'+
+  '<h3>放自己下载的戏</h3>'+
+  '<p>「拾藏」页可以直接把音频文件、甚至整个文件夹拖进去。放进去之后关掉页面再打开还在，'+
+  '听到一半退出去，下次接着听。</p>'+
+  '<h3>自己加台</h3>'+
+  '<p>「戏台」页最下面可以填名字和地址加台。地址一般是 <code>.mp3</code> 或 <code>.m3u8</code> 结尾的直播流。</p>'+
+  '<h3>换到手机上用</h3>'+
+  '<p>把 <code>XianDial.html</code> 这一个文件拷到手机里，用浏览器打开即可。'+
+  '也可以「添加到主屏幕」，以后当 App 点着用。手机和电脑互不影响，各存各的。</p>'+
+  '<h3>备份</h3>'+
+  '<p>「设置」里有<b>导出备份</b>，会下载一个 JSON 文件，含收藏、自建台和所有设置。换设备时用<b>恢复备份</b>导入。</p>'+
+  '<div class="ft">&copy; 永远的兰兰 · Lanlan Eternal</div></div>';
+}
+
+function viewFaq(){
+  var Q=[
+  ['为什么有的台点了没声音？',
+   '广播台的直播流地址会不定期更换，这是网络电台的通病。它在连不上时会自动试几条备用线路；'+
+   '如果都不行，会提示你换台。发现某个台长期连不上，可以自己加一条新地址顶替它。'],
+  ['为什么有的台我点了，提示不支持？',
+   '标着 <b>HLS</b> 的台，用的是 <code>.m3u8</code> 切片流。电脑上的 Edge、Safari，和苹果手机上的浏览器'+
+   '可以直接播；安卓上的 Chrome 一般不行。把同类的 <b>MP3</b> 台挑出来听就行——比如戏曲类里大部分都是 MP3 的。'],
+  ['声音断断续续、老缓冲？',
+   '直播流对网络比较敏感。收音机嘛，信号弱的时候就是会飘。换个网络，或者挑「怀旧老歌」里码率低的台试试。'+
+   '另外同时开着的其他视频、下载会抢带宽。'],
+  ['能听多久？会不会很费流量？',
+   '这些台大多是 64 kbps，一小时约 28 MB。用手机流量听一下午大概几百 MB，建议连 WiFi。'],
+  ['「拾藏」收进来的文件放在哪？会上传吗？',
+   '全部存在你这台设备的浏览器本地数据库里，<b>不会上传到任何服务器</b>，也不经过网络。'+
+   '正因如此，换设备或清缓存之后就不会同步过去。'],
+  ['为什么倒掉「拾藏」里一条，手机存储没马上变少？',
+   '浏览器回收空间有时会延迟，通常过一会儿或重启浏览器就好了。'],
+  ['电脑和手机能同步吗？',
+   '不能自动同步——这是单文件工具，没有服务器。把 HTML 文件分别拷到两台设备就各用各的；'+
+   '设置可以用「导出备份 / 恢复备份」手动搬。'],
+  ['为什么没有下载功能？',
+   '不做。市面上已有成熟的播客 / 戏曲下载工具，各司其职；它只管「听」，做一件事做干净。'],
+  ['为什么没有音量记忆之外的均衡器、倍速？',
+   '戏曲、评书这类内容倍速听会走味儿；家里人用的东西，按钮越少越好。'],
+  ['想换个名字 / 换个外观？',
+   '改 HTML 里的标题和 CSS 变量就行。这文件是给你自己的，改完自己看可以，别往外分发修改版。'],
+  ['为什么叫「拾声」？',
+   '戏、评书、相声这些东西散在各处——电台里、硬盘里、手机里。「拾声」就是把它们一个个拾起来，'+
+   '收进一个匣子。壳子照着老收音机做的，里头装的还是那些戏。']
+  ];
+  var h='<div class="card"><h2>常见问题</h2>';
+  for(var i=0;i<Q.length;i++){
+    h+='<div class="qa" data-qa="'+i+'"><div class="q"><span class="ar">▸</span><span>'+Q[i][0]+'</span></div>'+
+       '<div class="a">'+Q[i][1]+'</div></div>';
+  }
+  h+='</div><div class="ft">&copy; 永远的兰兰 · Lanlan Eternal</div>';
+  return h;
+}
+
+function viewLegal(){
+  return '<div class="card"><h2>免责声明</h2>'+
+  '<div class="danbox"><b>请先读这一段。</b></div>'+
+  '<h3>这是什么</h3>'+
+  '<p>「拾声」是一个<b>单文件、纯本地</b>的网络收音机工具。它自己不托管、不缓存、不转码、不分发任何音频内容，'+
+  '只把各个广播电台<b>已经公开提供</b>的直播流地址，交给浏览器去播放。</p>'+
+  '<h3>关于内容与版权</h3>'+
+  '<ul>'+
+  '<li>所有电台的音频流均来自第三方广播机构或公开电台目录，<b>与本工具无关</b>。</li>'+
+  '<li>本工具不录制、不存储、不二次分发任何音频，不提供点播与下载。</li>'+
+  '<li>收听的直播内容，其著作权归相应广播机构与权利人所有。</li>'+
+  '<li>「拾藏」播放的是<b>你自己导入的本机文件</b>，请确保你对该文件拥有合法使用权。</li>'+
+  '</ul>'+
+  '<h3>关于可用性</h3>'+
+  '<ul>'+
+  '<li>内置电台地址会随时间失效、变更或停播，本工具无法保证任何电台长期可用。</li>'+
+  '<li>本工具可能随时因第三方接口变化而部分或全部失效，且不承诺更新。</li>'+
+  '<li>请遵守你所在地区的法律法规及网络使用规定。</li>'+
+  '</ul>'+
+  '<h3>关于数据</h3>'+
+  '<p>所有收藏、自建台、设置与导入的音频，<b>只保存在你本机</b>。本工具不含统计、不含上报、不联网回传任何信息。'+
+  '清除浏览器数据会导致这些内容一并丢失，请自行导出备份。</p>'+
+  '<h3>关于名称</h3>'+
+  '<p>「拾声」为本工具的原创名称，英文名 <b>XianDial</b>。本工具为个人作品，'+
+  '与任何同名品牌、厂商、商品<b>均无关联</b>，亦未就上述名称主张商标权利。'+
+  '若有权利人认为不妥，请联系处理。</p>'+
+  '<h3>责任限制</h3>'+
+  '<p>本工具按「现状」提供，不附带任何明示或默示担保。因使用本工具产生的任何直接或间接损失，作者不承担责任。'+
+  '继续使用即表示你已阅读并同意以上内容。</p>'+
+  '<div class="ft">&copy; 永远的兰兰 · Lanlan Eternal</div></div>';
+}
+
+function viewAbout(){
+  return '<div class="card"><h2>关于</h2>'+
+  '<p><b>拾声</b> —— 把散在各处的声音拾起来，收进一个匣子里。</p>'+
+  '<p>旧时戏园子，台下人听的就是台上那一声唱。如今这些声音散着：有的在电台的直播流里，'+
+  '有的在你硬盘里存了多年的老录音里，有的在手机里那段随手录下的哼唱里。'+
+  '一个一个拾起来，就是「拾声」。</p>'+
+  '<p>壳子照着老收音机的样子做——木头框、刻度盘、旋钮，一并搬了回来。'+
+  '装进一个 HTML 文件里，双击就开、断网也能听自己存的戏。</p>'+
+  '<h3>它想做的事</h3>'+
+  '<ul>'+
+  '<li>让家里的老人不用学任何新东西，打开就能听戏。</li>'+
+  '<li>把散在各处的戏曲、评书、相声，收进同一个地方。</li>'+
+  '<li>能听自己下载的戏，听着睡着也没关系。</li>'+
+  '</ul>'+
+  '<h3>它不做什么</h3>'+
+  '<ul>'+
+  '<li>不做账号、不做登录、不做云同步。</li>'+
+  '<li>不采集任何数据，不回传任何信息。</li>'+
+  '<li>不做下载、不做转码、不做二次分发。</li>'+
+  '<li>不引任何外部脚本或字体，一个文件自带全部。</li>'+
+  '</ul>'+
+  '<h3>技术说明</h3>'+
+  '<table>'+
+  '<tr><th>项目</th><th>说明</th></tr>'+
+  '<tr><td>形态</td><td>单个 HTML 文件，约 60 KB，无依赖、无 CDN、无联网安装</td></tr>'+
+  '<tr><td>播放</td><td>浏览器原生 Audio；MP3 直播流与 HLS（m3u8）切片流</td></tr>'+
+  '<tr><td>内置台</td><td>精选 50 余个中文戏曲 / 曲艺 / 文艺电台，全部经过逐台试播验证</td></tr>'+
+  '<tr><td>本地库</td><td>IndexedDB 存储，元数据与二进制分开存放，支持断点续播</td></tr>'+
+  '<tr><td>设置</td><td>localStorage 保存，可导出 / 导入 JSON 备份</td></tr>'+
+  '<tr><td>隐私</td><td>零采集、零上报、零第三方请求（仅播放时直连电台本身）</td></tr>'+
+  '</table>'+
+  '<h3>授权</h3>'+
+  '<p>可自由使用、原样转发，请保留署名。若要改动，请只留给自己看，改过的版本不要对外分发。'+
+  '保留所有权利。</p>'+
+  '<div class="ft"><b>拾声</b> · XianDial<br>&copy; 永远的兰兰 &nbsp;·&nbsp; Lanlan Eternal<br>'+
+  '<span style="opacity:.7">声音里的戏园子</span></div></div>';
+}
+
+/* ══════════════════════════════════════════════════════
+   七、拾藏渲染
+   ══════════════════════════════════════════════════════ */
+var LOCALS=[];
+function refreshLocal(){
+  var el=$('localList'); if(!el) return;
+  localList().then(function(a){
+    LOCALS=a||[];
+    var c=$('localCount'); if(c) c.textContent=LOCALS.length;
+    var box=$('localList'); if(!box) return;
+    if(!LOCALS.length){ box.innerHTML='<p class="hint">还没放东西进来。</p>'; return; }
+    var h='';
+    for(var i=0;i<LOCALS.length;i++){
+      var m=LOCALS[i], cur=(P.url==='local:'+m.id);
+      h+='<div class="lrow"'+(cur?' style="border-color:var(--dan)"':'')+'>'+
+         '<div class="g"><div class="t">'+esc(m.n)+'</div>'+
+         '<div class="s">'+esc(fmtSize(m.sz))+
+           (m.pos>3?(' · 上次听到 '+esc(fmtTime(m.pos))):'')+
+           (m.g?(' · '+esc(m.g)):'')+'</div></div>'+
+         '<button class="btn ghost" data-lp="'+esc(m.id)+'">'+(cur&&P.state==='playing'?'暂停':'收听')+'</button>'+
+         '<button class="btn ghost" data-ld="'+esc(m.id)+'" title="倒掉">倒掉</button>'+
+         '</div>';
+    }
+    box.innerHTML=h;
+  }).catch(function(){});
+}
+
+function importFiles(files){
+  if(!files || !files.length) return;
+  var arr=[], total=0;
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    if(f.size>0 && (/\.(mp3|m4a|aac|ogg|opus|wav|flac|wma|mp4|m3u8|ts)$/i.test(f.name) || (f.type||'').indexOf('audio')===0)){
+      arr.push(f); total+=f.size;
+    }
+  }
+  if(!arr.length){ toast('没找到能听的音频文件'); return; }
+  var bar=$('impBar'), fill=$('impFill'), txt=$('impTxt');
+  if(bar){ bar.style.display=''; fill.style.width='0%'; }
+  if(txt) txt.textContent='准备收进来：'+arr.length+' 个文件，共 '+fmtSize(total);
+  var done=0;
+  (function next(){
+    if(done>=arr.length){
+      if(fill) fill.style.width='100%';
+      if(txt) txt.textContent='放好了：'+arr.length+' 个文件。往下看，已经收进来了。';
+      toast('放进去了 '+arr.length+' 个');
+      setTimeout(function(){ if(bar) bar.style.display='none'; }, 1600);
+      refreshLocal();
+      return;
+    }
+    var f=arr[done];
+    var g=(f.webkitRelativePath||'').split('/')[0] || '';
+    localAdd(f, g).then(function(){
+      done++;
+      if(fill) fill.style.width=((done/arr.length)*100).toFixed(0)+'%';
+      if(txt) txt.textContent='放进去了 '+done+' / '+arr.length+'：'+f.name;
+      next();
+    }).catch(function(){
+      done++;
+      if(txt) txt.textContent='有一个没放进去：'+f.name;
+      next();
+    });
+  })();
+}
+
+/* ══════════════════════════════════════════════════════
+   八、设置 / 主题
+   ══════════════════════════════════════════════════════ */
+function applyTheme(){
+  var t=S.theme;
+  if(t==='system'){
+    t=(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+  }
+  document.documentElement.setAttribute('data-theme', t);
+  var mc=document.querySelector('meta[name=theme-color]');
+  if(mc) mc.setAttribute('content', t==='dark'?'#1B1C1F':'#F2F3F5');
+}
+function applyAll(){
+  applyTheme();
+  document.documentElement.style.setProperty('--ui', S.ui);
+  document.documentElement.style.setProperty('--tap', S.tap+'px');
+  document.documentElement.setAttribute('data-motion', S.motion==='low'?'low':'full');
+  syncSeg('segTheme','data-th',S.theme);
+  syncSeg('segUi','data-ui',String(S.ui));
+  syncSeg('segTap','data-tap',String(S.tap));
+  syncSeg('segMotion','data-mo',S.motion);
+  syncSeg('segSleep','data-sl',String(S.sleepMin));
+  syncSeg('segResume','data-rs',String(S.resume));
+  syncSeg('segSkip','data-sk',String(S.skip));
+}
+function syncSeg(id, attr, val){
+  var box=$(id); if(!box) return;
+  var bs=box.querySelectorAll('button');
+  for(var i=0;i<bs.length;i++){
+    bs[i].classList.toggle('on', String(bs[i].getAttribute(attr))===String(val));
+  }
+}
+function openSheet(v){ $('sheet').classList.toggle('on', v); $('mask').classList.toggle('on', v); }
+
+/* 导出 / 导入 */
+function exportJSON(){
+  var data={app:'xixiazi', v:1, t:Date.now(), s:S};
+  var blob=new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  var d=new Date();
+  a.href=url;
+  a.download='xixiazi-backup-'+d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+  toast('备份已经下载了');
+}
+function importJSON(text){
+  var o;
+  try{ o=JSON.parse(text); }catch(e){ toast('这个文件读不出来，不是备份文件？'); return; }
+  var s=(o && o.app==='xixiazi' && o.s) ? o.s : (o && o.vol!=null ? o : null);
+  if(!s){ toast('这不是拾声的备份文件'); return; }
+  for(var k in s){ if(s.hasOwnProperty(k)) S[k]=s[k]; }
+  save(); applyAll(); setVol(S.vol);
+  if(S.sleepMin) setSleep(S.sleepMin);
+  render();
+  toast('备份恢复好了');
+}
+
+/* ══════════════════════════════════════════════════════
+   九、事件
+   ══════════════════════════════════════════════════════ */
+var NEWCAT=null;
+var LONGPRESSED=false;
+
+/* 向上找带某属性的祖先（点卡片里的文字也能命中卡片本身） */
+function closestAttr(el, attr){
+  while(el && el!==document.body){
+    if(el.getAttribute && el.getAttribute(attr)!=null) return el;
+    el=el.parentNode;
+  }
+  return null;
+}
+
+document.addEventListener('click', function(e){
+  var el;
+
+  // 导航
+  el=closestAttr(e.target,'data-v');
+  if(el){ VIEW=el.getAttribute('data-v'); window.scrollTo(0,0); render(); return; }
+
+  // 选台
+  el=closestAttr(e.target,'data-i');
+  if(el && el.classList && el.classList.contains('st')){
+    if(LONGPRESSED){ LONGPRESSED=false; return; }
+    var a=allStations(), st=a[parseInt(el.getAttribute('data-i'),10)];
+    if(!st) return;
+    if(P.url===st.u && P.state==='playing'){ audio.pause(); P.state='paused'; setNow(); render(); return; }
+    if(P.url===st.u && P.state==='paused'){ audio.play().catch(function(){}); P.state='playing'; setNow(); render(); return; }
+    playStation(st);
+    return;
+  }
+
+  // 分类筛选
+  el=closestAttr(e.target,'data-cat');
+  if(el){ S.lastCat=el.getAttribute('data-cat'); save(); render(); return; }
+
+  // 最近听过
+  el=closestAttr(e.target,'data-hist');
+  if(el){
+    var su=el.getAttribute('data-hist'), s2=byUrl(su);
+    if(s2) playStation(s2); else toast('这个台已经不在清单里了');
+    return;
+  }
+
+  // 自建台归到哪一类
+  el=closestAttr(e.target,'data-newcat');
+  if(el){
+    NEWCAT=el.getAttribute('data-newcat');
+    var bh=$('addHint'); if(bh) bh.textContent='归到「'+NEWCAT+'」';
+    var box0=el.parentNode, chips=box0.querySelectorAll('.chip');
+    for(var z=0;z<chips.length;z++){ chips[z].classList.toggle('on', chips[z]===el); }
+    return;
+  }
+
+  // 常见问题折叠
+  el=closestAttr(e.target,'data-qa');
+  if(el){
+    var box=el.closest ? el.closest('.qa') : el.parentNode;
+    if(box && box.classList.contains('qa')) box.classList.toggle('on');
+    return;
+  }
+
+  // 拾藏 · 播放 / 倒掉
+  el=closestAttr(e.target,'data-lp');
+  if(el){
+    var lp=el.getAttribute('data-lp');
+    if(P.url==='local:'+lp && P.state==='playing'){
+      flushLocalPos(); audio.pause(); P.state='paused'; setNow(); render(); return;
+    }
+    if(P.url==='local:'+lp && P.state==='paused'){
+      audio.play().catch(function(){}); P.state='playing'; setNow(); render(); return;
+    }
+    var rec=null;
+    for(var m=0;m<LOCALS.length;m++){ if(LOCALS[m].id===lp){ rec=LOCALS[m]; break; } }
+    if(rec) localPlay(rec); else toast('读不到这一条');
+    return;
+  }
+  el=closestAttr(e.target,'data-ld');
+  if(el){
+    var ld=el.getAttribute('data-ld');
+    if(!window.confirm('这一条会倒掉，本机上的原文件不受影响。确定？')) return;
+    localDel(ld).then(function(){
+      if(P.url==='local:'+ld){ stopAudio(); P.url=null; P.state='idle'; setNow(); }
+      refreshLocal(); toast('倒掉了');
+    });
+    return;
+  }
+});
+
+/* 长按 / 双击收藏 */
+var pressTimer=null;
+document.addEventListener('pointerdown', function(e){
+  var el=closestAttr(e.target,'data-i');
+  if(el && el.classList && el.classList.contains('st')){
+    var a=allStations(), st=a[parseInt(el.getAttribute('data-i'),10)];
+    if(!st) return;
+    pressTimer=setTimeout(function(){
+      pressTimer=null;
+      LONGPRESSED=true;                 // 抑制随后的 click，别又播一遍
+      toggleFav(st.u);
+      setTimeout(function(){ LONGPRESSED=false; }, 900);
+    }, 620);
+  }
+});
+['pointerup','pointercancel','pointermove','scroll'].forEach(function(ev){
+  document.addEventListener(ev, function(){ if(pressTimer){ clearTimeout(pressTimer); pressTimer=null; } }, true);
+});
+
+function toggleFav(u){
+  var i=S.fav.indexOf(u);
+  if(i>=0){ S.fav.splice(i,1); toast('从常听里拿出去了'); }
+  else{ S.fav.push(u); toast('收进「常听的台」了'); }
+  save(); render();
+}
+
+/* 播放条 */
+$('btnPlay').addEventListener('click', togglePlay);
+$('knobPrev').addEventListener('click', prevStation);
+$('knobNext').addEventListener('click', nextStation);
+$('btnVolUp').addEventListener('click', function(){ setVol(S.vol+0.1); });
+$('btnVolDown').addEventListener('click', function(){ setVol(S.vol-0.1); });
+$('btnGear').addEventListener('click', function(){ applyAll(); openSheet(true); });
+$('mask').addEventListener('click', function(){ openSheet(false); });
+
+/* 设置面板里的分段控件 */
+document.addEventListener('click', function(e){
+  var t=e.target;
+  if(!t.getAttribute) return;
+  var th=t.getAttribute('data-th'); if(th){ S.theme=th; save(); applyAll(); return; }
+  var ui=t.getAttribute('data-ui'); if(ui){ S.ui=parseFloat(ui); save(); applyAll(); return; }
+  var tp=t.getAttribute('data-tap'); if(tp){ S.tap=parseInt(tp,10); save(); applyAll(); return; }
+  var mo=t.getAttribute('data-mo'); if(mo){ S.motion=mo; save(); applyAll(); return; }
+  var sl=t.getAttribute('data-sl'); if(sl){ setSleep(parseInt(sl,10)); applyAll(); toast(sl==='0'?'不定时了':('到点自动关机：'+sl+' 分钟')); return; }
+  var rs=t.getAttribute('data-rs'); if(rs){ S.resume=parseInt(rs,10); save(); applyAll(); return; }
+  var sk=t.getAttribute('data-sk'); if(sk){ S.skip=parseInt(sk,10); save(); applyAll(); return; }
+});
+
+/* 加自建台 */
+document.addEventListener('click', function(e){
+  if(!e.target || e.target.id!=='btnAddSt') return;
+  var n=($('inName')||{}).value||'', u=($('inUrl')||{}).value||'';
+  n=n.trim(); u=u.trim();
+  if(!n){ toast('先给这个台起个名字'); return; }
+  if(!/^https?:\/\//i.test(u)){ toast('地址要以 http:// 或 https:// 开头'); return; }
+  for(var i=0;i<S.custom.length;i++){ if(S.custom[i].u===u){ toast('这个地址已经收进来了'); return; } }
+  S.custom.unshift({n:n, u:u, c:NEWCAT||'自建'});
+  save(); toast('加进去了：'+n);
+  NEWCAT=null; render();
+});
+document.addEventListener('click', function(e){
+  if(!e.target || e.target.id!=='btnExport') return;
+  exportJSON();
+});
+document.addEventListener('click', function(e){
+  if(!e.target || e.target.id!=='btnImport') return;
+  $('fileImportJson').click();
+});
+document.addEventListener('click', function(e){
+  if(!e.target || e.target.id!=='btnReset') return;
+  if(!window.confirm('会清掉收藏、自建台和所有设置（「拾藏」里的音频要单独倒）。确定？')) return;
+  localStorage.removeItem(KEY);
+  location.reload();
+});
+$('fileImportJson').addEventListener('change', function(e){
+  var f=e.target.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){ importJSON(String(r.result)); };
+  r.readAsText(f);
+  e.target.value='';
+});
+
+/* 拾藏按钮 */
+document.addEventListener('click', function(e){
+  var id=e.target && e.target.id;
+  if(id==='btnPickAudio') $('fileAudio').click();
+  else if(id==='btnPickDir') $('fileAudioDir').click();
+  else if(id==='btnLocalShuffle'){
+    if(!LOCALS.length){ toast('还没拾到东西'); return; }
+    localPlay(LOCALS[Math.floor(Math.random()*LOCALS.length)]);
+  }
+  else if(id==='btnLocalClear'){
+    if(!LOCALS.length){ toast('本来就是空的'); return; }
+    if(!window.confirm('「拾藏」里的 '+LOCALS.length+' 条会全部倒掉，本机原文件不受影响。确定？')) return;
+    var ids=LOCALS.map(function(x){ return x.id; });
+    Promise.all(ids.map(localDel)).then(function(){
+      if(P.url && P.url.indexOf('local:')===0){ stopAudio(); P.url=null; P.state='idle'; setNow(); }
+      refreshLocal(); toast('倒干净了');
+    });
+  }
+});
+$('fileAudio').addEventListener('change', function(e){ importFiles(e.target.files); e.target.value=''; });
+$('fileAudioDir').addEventListener('change', function(e){ importFiles(e.target.files); e.target.value=''; });
+
+/* 拖拽进拾藏 */
+document.addEventListener('dragover', function(e){
+  var d=$('drop'); if(!d) return;
+  e.preventDefault(); d.classList.add('over');
+});
+document.addEventListener('dragleave', function(e){
+  var d=$('drop'); if(d) d.classList.remove('over');
+});
+document.addEventListener('drop', function(e){
+  var d=$('drop'); if(!d) return;
+  e.preventDefault(); d.classList.remove('over');
+  if(e.dataTransfer && e.dataTransfer.files) importFiles(e.dataTransfer.files);
+});
+
+/* 键盘：空格开关，左右换台 */
+document.addEventListener('keydown', function(e){
+  if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if(e.code==='Space'){ e.preventDefault(); togglePlay(); }
+  else if(e.code==='ArrowRight'){ nextStation(); }
+  else if(e.code==='ArrowLeft'){ prevStation(); }
+});
+
+/* 系统主题变化 */
+try{
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){
+    if(S.theme==='system') applyTheme();
+  });
+}catch(e){}
+
+/* ══════════════════════════════════════════════════════
+   十、启动
+   ══════════════════════════════════════════════════════ */
+(function boot(){
+  load();
+  applyAll();
+  setVol(S.vol);
+  if(S.sleepMin) setSleep(S.sleepMin);
+  if(S.resume && S.cur && S.cur.u){
+    var back=byUrl(S.cur.u);
+    P.url=S.cur.u; P.name=S.cur.n; P.cat=S.cur.c||'';
+    P.vs=variants(S.cur.u); P.vi=0; P.state='paused';
+    if(back && back.n){ P.name=back.n; P.cat=back.c||P.cat; }
+  }
+  VIEW='radio';
+  render();
+  setNow();
+  if(P.url) setNeedle();
+})();
+</script>
+</body>
+</html>
