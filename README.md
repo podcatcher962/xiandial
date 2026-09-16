@@ -27,7 +27,6 @@
 | **匣子外观** | 木纹外壳 + 扬声器网罩 + 调频窗，指针随台移动、放送时电平表跳动 |
 | **换台** | 左右旋钮换台，中间圆钮开关；长按卡片收藏 |
 | **定时关机** | 15 分 / 30 分 / 1 小时 / 1.5 小时 —— 听着睡着也不怕 |
-| **开屏海报** | 打开先见一张海报，轻触进入，或 2.8 秒后自动进入；可在设置里改成「只第一次」或「不显示」 |
 | **其他** | 自建台、深浅色、四档字号、大触控模式、减弱动效、设置导出导入、历史记录 |
 
 ### 怎么用
@@ -56,7 +55,7 @@
 
 | 项目 | 说明 |
 |---|---|
-| 形态 | 单个 HTML 文件，约 570 KB（含内嵌开屏海报与 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
+| 形态 | 单个 HTML 文件，约 370 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
 | 播放 | 浏览器原生 `Audio` + 内嵌 hls.js；MP3 直播流与 HLS（m3u8）切片流 |
 | 本地库 | IndexedDB，元数据与二进制分库存放，支持断点续播 |
 | 设置 | localStorage 保存，可导出 / 导入 JSON 备份 |
@@ -89,7 +88,6 @@ Works in mobile browsers too — you can "Add to Home Screen" and use it like an
 | **Radio shell** | Wood-grain cabinet, speaker grille and a tuning window whose needle follows the station; a VU meter pulses during playback |
 | **Tuning** | Turn the left/right knobs to change station, the centre knob to toggle play; long-press a card to bookmark |
 | **Sleep timer** | 15 min / 30 min / 1 h / 1.5 h — safe to fall asleep to |
-| **Splash poster** | A poster shows on launch — tap to enter, or it auto-enters after 2.8 s. Can be set to "first time only" or "never" in Settings |
 | **Extras** | Add your own stations, light/dark themes, four font sizes, large-touch mode, reduced motion, settings export/import, listening history |
 
 ### How to use
@@ -117,7 +115,7 @@ Works in mobile browsers too — you can "Add to Home Screen" and use it like an
 
 | Item | Detail |
 |---|---|
-| Form | A single HTML file, ~570 KB (with the embedded splash poster and hls.js engine), no dependencies, no CDN, no install |
+| Form | A single HTML file, ~370 KB (with the embedded hls.js engine), no dependencies, no CDN, no install |
 | Playback | Native browser `Audio` + embedded hls.js; MP3 live streams and HLS (m3u8) segments |
 | Local library | IndexedDB, metadata and binary stored separately, resume supported |
 | Settings | Saved in localStorage, exportable / importable as JSON |
