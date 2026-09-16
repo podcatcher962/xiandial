@@ -190,6 +190,14 @@ p{margin:7px 0;color:var(--tx2)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
 .stgrid{display:grid;gap:9px;grid-template-columns:repeat(auto-fill,minmax(196px,1fr))}
+/* 收藏分组（收藏超过 12 个才出现） */
+.grp{margin:0 0 14px}
+.grp .ghd{margin:0 0 7px;display:flex;align-items:center;gap:7px}
+.grp .ghd h3{margin:0;font-size:calc(13.5px * var(--ui));color:var(--tx2);font-weight:600;letter-spacing:.4px}
+.grp .ghd h3::before{content:"";display:inline-block;width:3px;height:12px;border-radius:2px;
+  background:var(--acc);margin-right:7px;vertical-align:-1px}
+.grp .ghd .cn{font-size:calc(11.5px * var(--ui));color:var(--tx2);opacity:.7}
+.grp .stgrid{grid-template-columns:repeat(auto-fill,minmax(196px,1fr))}
 .st{
   background:var(--card);border:1px solid var(--line);border-radius:10px;
   padding:11px 12px;text-align:left;display:flex;flex-direction:column;gap:5px;
@@ -432,7 +440,9 @@ th{background:var(--card2);color:var(--tx)}
     <button data-sl="30">30 分</button>
     <button data-sl="60">1 小时</button>
     <button data-sl="90">1.5 小时</button>
+    <button data-sl="-1">播完就停</button>
   </div>
+  <p class="hint" style="margin:-4px 0 4px">到点前 20 秒会把音量慢慢收下去，不会被突然掐断。选「播完就停」只对「拾藏」里自己存的戏有效。</p>
   <label class="f">打开后自动续播上次的台</label>
   <div class="seg" id="segResume">
     <button data-rs="1">开</button>
@@ -1489,6 +1499,49 @@ function toast(msg, ms){
 /* 搜索词（不持久化，重开即清） */
 var Q='', QFOCUS=false;
 
+/* ══ 拼音首字母 ══
+   只覆盖台名里实际会出现的字，别去塞完整的拼音表（会让文件白白大一圈）。
+   搜索时把关键词与台名都转成「声母串」，于是 nbxw / 宁波新闻 都能命中宁波新闻综合广播 */
+var PY = (function(){
+  var m = {};
+  function add(letters, chars){ for(var i=0;i<chars.length;i++){ m[chars[i]]=letters; } }
+  add('a','啊阿');
+  add('b','八巴拔把爸白百柏班般板版办半邦帮包宝保报抱北贝备本比彼笔必毕闭边编变标表别宾冰兵并波播伯驳博补不布步部');
+  add('c','才材财采彩菜参餐残仓沧曹草册侧测层插查茶察差柴产长常厂场畅唱抄朝潮车彻陈晨称成呈承城乘程楚川传船创吹春纯词慈辞磁此刺从丛粗促村存寸错');
+  add('d','答打大代带待丹单但淡当党刀导到道德得的灯登等低敌底地第典点电店调掉跌丁顶定东冬董动都斗独读度端短段断队对顿多夺朵');
+  add('e','俄鹅额恩儿而尔耳二');
+  add('f','发法帆番翻凡反返方坊房放飞非菲肥费分丰风封峰冯凤佛夫服福抚府父负复富');
+  add('g','该改概干甘刚钢港高告哥歌格阁个各给根跟更工公功攻供宫共沟构古谷股故顾瓜关观官冠馆管贯光广归贵桂国果过');
+  add('h','哈还孩海含韩汉航好号合河禾和贺黑很红洪湖虎互户花华话怀淮欢环缓黄煌回辉汇会惠婚活火获');
+  add('j','击机基激及吉级极即急集几己纪技济继寄加家佳嘉甲价架尖坚间检简见建健江姜将讲交郊角教接街节结解界今金津仅紧进近晋京经荆精景警净竟竞究九久旧居局举巨剧卷决绝军均');
+  add('k','卡开看康抗考科可克客课空口扣苦库库快宽款矿况昆捆困扩');
+  add('l','拉来兰蓝览朗劳老乐雷垒类冷离黎理力历立丽利例连联脸练良凉梁两辽疗了列烈林临琳灵岭领另刘流留六龙娄楼漏路露吕旅绿律乱略伦轮论罗逻洛落');
+  add('m','妈马吗买卖满慢忙毛么没眉梅媒每美妹门萌孟梦米密棉免面苗民敏名明鸣命摸模末陌莫某母木目牧幕');
+  add('n','拿哪那纳乃男南难脑闹内能尼你年念娘宁农弄努怒女暖诺');
+  add('o','哦欧偶');
+  add('p','怕拍排派盘判旁跑培陪配朋鹏批皮偏片票拼频品平评苹屏泼迫破普谱');
+  add('q','七妻期其奇齐旗起气汽千迁前钱浅强抢桥巧切且青轻清情请庆穷秋求区曲取趣全权劝缺却确群');
+  add('r','然染让饶绕热人仁认日荣容如入软锐润若弱');
+  add('s','三散扫色森僧沙山删闪善汕伤商上尚少绍设社申深神审甚声生升胜圣师诗施十石时实识史使始士市示世式事势视试是收手守首受书叔舒输疏熟数双水顺说司丝思斯四寺似松宋送搜苏俗诉肃素速宿酸算虽随岁孙所索');
+  add('t','他她它台抬太态谈坦唐堂塘糖桃陶讨特疼提题体天田甜填条跳听廷亭停通同铜童统头投透突图途土团推退屯托脱拓');
+  add('w','挖瓦外完玩晚万汪王网往忘危威微围唯维伟委卫为未位味温文闻问翁我沃屋无吴五午伍武舞勿务物');
+  add('x','西希析息悉溪熄熙膝习席喜系细夏仙先闲贤显县现限线乡相香湘详想向项巷象像消销小晓孝效协斜写谢心辛欣新信星刑行形醒兴幸性兄休修秀虚需徐许序叙宣玄选学雪寻讯迅');
+  add('y','压呀牙亚严言研盐颜演眼宴验央阳扬羊杨洋养样要爷也业叶页夜一衣医依仪以亿义艺忆议亦异意因阴音银引印英迎盈影应映拥永勇用优由邮犹游友有又右幼于余鱼娱渔舆宇雨语育玉郁预域欲遇元园员原圆源远院约月阅越云允运韵');
+  add('z','杂灾再在咱赞脏早造择泽增赠扎札摘宅窄寨沾展占战张章掌丈招昭找召赵照折者这浙贞针珍真诊阵振镇争征整正证郑支只知织直执值职止纸指至志制治质致中忠钟终种重州周洲朱珠竹逐主住祝专转庄装壮追准捉资子自字宗综总纵走足族祖组钻最尊左作坐座做');
+  return m;
+})();
+
+/* 中转拼音首字母串，例如「宁波新闻综合广播」→ nbxwzhgb */
+function pyOf(str){
+  if(!str) return '';
+  var out='';
+  for(var i=0;i<str.length;i++){
+    var c=str.charAt(i), p=PY[c];
+    out += (p || c.toLowerCase());
+  }
+  return out.replace(/[^a-z0-9]/g,'');
+}
+
 /* 该 URL 是不是 HLS（m3u8） */
 function isHls(u){ return /\.m3u8(\?|$)/i.test(u); }
 /* 浏览器是否原生支持 HLS（Edge / Safari 支持；安卓 Chrome 不支持） */
@@ -1519,7 +1572,7 @@ audio.preload='none';
 
 var P={
   url:null, name:'', cat:'', vs:[], vi:0, state:'idle',  // idle|loading|playing|paused|error
-  failCount:0, retryTimer:null
+  failCount:0, retryTimer:null, inRetry:0, lastPlay:0
 };
 
 function setNow(){
@@ -1635,7 +1688,15 @@ function tryPlay(){
     P.vi++;
     if(P.vi<P.vs.length){ tryPlay(); }
     else{
-      P.state='error'; setNow(); render();
+      // 所有线路都试过了：先「原地重试」两次（很多是瞬时抖动），再交给自动跳台
+      if(P.inRetry<2){
+        P.inRetry++;
+        P.state='loading'; setNow(); render();
+        $('nowS').textContent='信号断了，正在重新接线（第 '+P.inRetry+' 次）……';
+        P.retryTimer=setTimeout(function(){ P.vi=0; tryPlay(); }, 1600);
+        return;
+      }
+      P.state='error'; P.inRetry=0; setNow(); render();
       if(S.skip && P.failCount<4){ P.failCount++; P.retryTimer=setTimeout(function(){ nextStation(); }, 900); }
       else{ P.failCount=0; toast('这个台暂时连不上，声音可能已经断了，请换一个台'); }
     }
@@ -1647,13 +1708,62 @@ function tryPlay(){
   setTimeout(function(){
     if(done) return;
     if(audio.readyState>=2){ done=true; audio.removeEventListener('error',onErr);
-      P.state='playing'; P.failCount=0; setNow(); render(); }
+      P.state='playing'; P.failCount=0; P.inRetry=0; P.lastPlay=Date.now(); setNow(); render(); }
   }, 1200);
 }
 
-audio.addEventListener('playing', function(){ P.state='playing'; P.failCount=0; setNow(); render(); });
+/* ══ 听着听着断了：不用重新点，自己接回去 ══
+   只有「正在播的时候断」才管（用户自己按暂停不算）；最多接 4 次，间隔 1.5s / 3s / 6s / 12s。
+   接不上就退回自动跳台，或者提示换台。 */
+var DC={timer:null, tries:0};
+function dcClear(){ if(DC.timer){ clearTimeout(DC.timer); DC.timer=null; } DC.tries=0; }
+function dcRetry(){
+  if(DC.tries>=4){
+    dcClear();
+    toast('这个台接不回去了，换一个试试');
+    $('nowS').textContent='信号断了，接不回去';
+    if(S.skip) nextStation();
+    return;
+  }
+  var wait=[1500,3000,6000,12000][DC.tries] || 12000;
+  DC.tries++;
+  P.state='loading'; setNow();
+  $('nowS').textContent='信号断了，正在接回去（第 '+DC.tries+' 次）……';
+  DC.timer=setTimeout(function(){
+    if(!P.url){ dcClear(); return; }
+    P.vi=0; P.inRetry=0;
+    tryPlay();
+    /* 接上没接上，交给 tryPlay 的 fail/成功回调处理；
+       这里再挂一个观察：过 3 秒还没回到 playing 就再试 */
+    setTimeout(function(){
+      if(P.state!=='playing' && P.state!=='idle' && P.state!=='paused') dcRetry();
+    }, 3000);
+  }, wait);
+}
+audio.addEventListener('playing', function(){
+  P.state='playing'; P.failCount=0; P.inRetry=0; P.lastPlay=Date.now(); dcClear(); setNow(); render();
+});
 audio.addEventListener('pause', function(){ if(P.state==='playing'){ P.state='paused'; setNow(); render(); } });
 audio.addEventListener('stalled', function(){ if(P.state==='playing'){ $('nowS').textContent='信号有点弱，正在缓冲……'; } });
+/* 播放中出错 / 无声：触发自动重连 */
+audio.addEventListener('error', function(){
+  if(P.state==='playing' && P.url){ dcRetry(); }
+});
+audio.addEventListener('ended', function(){
+  /* 「播完就停」：本地音轨放完就关机 */
+  if(P.url && P.url.indexOf('local:')===0){
+    if(S.sleepMin<0){
+      stopAudio(); P.state='idle'; P.url=null; setNow(); render();
+      S.sleepMin=0; save(); $('sleepBadge').style.display='none';
+      toast('这一段落放完了，自己关机了');
+      return;
+    }
+    /* 本地库里的音频放完了，默认接着放下一段 */
+    if(LOCALS && LOCALS.length>1) localNext();
+    return;
+  }
+  if(P.url && P.state==='playing'){ dcRetry(); }
+});
 
 function togglePlay(){
   if(P.state==='playing'){ audio.pause(); P.state='paused'; setNow(); render(); return; }
@@ -1686,25 +1796,56 @@ function pushHist(st){
   save();
 }
 
-/* 定时关机 */
-var sleepTimer=null, sleepEnd=0;
+/* 定时关机
+   到点前 20 秒开始把音量慢慢收到 0（睡着的人不会被「啪」一下惊醒），
+   然后暂停并把音量还原，下次听还是原来的音量。 */
+var sleepTimer=null, sleepEnd=0, fadeTimer=null;
+function fadeOut(cb){
+  if(fadeTimer){ clearInterval(fadeTimer); fadeTimer=null; }
+  var from=audio.volume, steps=20, i=0;
+  fadeTimer=setInterval(function(){
+    i++;
+    var v=from*(1-i/steps);
+    try{ audio.volume=Math.max(0, v); }catch(e){}
+    if(i>=steps){
+      clearInterval(fadeTimer); fadeTimer=null;
+      try{ audio.volume=from; }catch(e){}
+      if(cb) cb();
+    }
+  }, 1000);
+}
 function setSleep(min){
   S.sleepMin=min; save();
   if(sleepTimer){ clearInterval(sleepTimer); sleepTimer=null; }
+  if(fadeTimer){ clearInterval(fadeTimer); fadeTimer=null; try{ audio.volume=S.vol; }catch(e){} }
   if(!min){ $('sleepBadge').style.display='none'; return; }
+  if(min<0){
+    /* 播完就停：只对本地库里的音轨有意义（直播流没有「完了」这一说） */
+    $('sleepBadge').style.display='';
+    $('sleepBadge').textContent='播完就停';
+    return;
+  }
   sleepEnd=Date.now()+min*60000;
   $('sleepBadge').style.display='';
   sleepTimer=setInterval(function(){
     var left=sleepEnd-Date.now();
     if(left<=0){
       clearInterval(sleepTimer); sleepTimer=null;
-      audio.pause(); P.state='paused'; setNow(); render();
+      stopAudio();
+      P.state='idle'; P.url=null; setNow(); render();
       $('sleepBadge').style.display='none'; S.sleepMin=0; save();
+      // 关了机就不该再自己接回去
       toast('时辰到了，自己关机了');
       return;
     }
-    var m=Math.floor(left/60000), s=Math.floor(left%60000/1000);
-    $('sleepBadge').textContent='定时 '+m+':'+(s<10?'0':'')+s;
+    // 最后 20 秒开始淡出
+    if(left<=20000 && !fadeTimer && P.state==='playing'){
+      fadeOut(function(){
+        try{ audio.pause(); }catch(e){}
+      });
+    }
+    var m=Math.floor(left/60000), sec=Math.floor(left%60000/1000);
+    $('sleepBadge').textContent='定时 '+m+':'+(sec<10?'0':'')+sec;
   }, 1000);
 }
 
@@ -1795,6 +1936,15 @@ function localBlob(id){
 
 /* 本地播放 */
 var LP={ id:null, url:null, dur:0, seeking:false, tick:null };
+/* 顺序放下一段（本地库播完自动接上） */
+function localNext(){
+  if(!LOCALS || !LOCALS.length) return;
+  var cur=LP.id, i=-1;
+  for(var k=0;k<LOCALS.length;k++){ if(LOCALS[k].id===cur){ i=k; break; } }
+  var nx=LOCALS[(i+1)%LOCALS.length];
+  if(nx) localPlay(nx);
+}
+
 function localPlay(rec){
   if(!rec) return;
   localBlob(rec.id).then(function(blob){
@@ -1897,7 +2047,7 @@ function viewRadio(){
   h+='<h2>戏台</h2>';
   h+='<div class="qbox"><span class="qi">⌕</span>'+
      '<input type="search" id="qInput" autocomplete="off" spellcheck="false" '+
-     'placeholder="搜台名：戏曲 / 河南 / 评书 / 央视" value="'+esc(Q)+'">'+
+     'placeholder="搜台名 / 省份 / 拼音首字母：河南、nbxw" value="'+esc(Q)+'">'+
      '<button class="qclear'+(Q?'':' hide')+'" data-qclear="1" aria-label="清空搜索">✕</button></div>';
   h+='<p class="hint">'+a.length+' 个台已经过试播验证。点一下就能开声听。</p>';
   h+='<div class="chips grid" id="catChips">';
@@ -1937,8 +2087,14 @@ function viewRadio(){
   }
   var kw=(Q||'').trim().toLowerCase();
   if(kw){
+    var kwpy=kw.replace(/[^a-z0-9]/g,'');       // 关键词的纯字母形态
     list=list.filter(function(x){
-      return (x.n+' '+(x.c||'')+' '+((x.g||[]).join(' '))).toLowerCase().indexOf(kw)>=0;
+      var blob=(x.n+' '+(x.c||'')+' '+((x.g||[]).join(' '))).toLowerCase();
+      if(blob.indexOf(kw)>=0) return true;
+      /* 拼音通道：关键词是字母时，比台名的首字母串（nbxw → 宁波新闻综合广播） */
+      if(kwpy && pyOf(x.n).indexOf(kwpy)>=0) return true;
+      if(kwpy && pyOf((x.g||[]).join('')).indexOf(kwpy)>=0) return true;
+      return false;
     });
     h+='<div class="card" style="padding:11px 15px"><p class="hint" style="margin:0">'+
        '“'+esc(Q)+'” 找到 <b>'+list.length+'</b> 个台</p></div>';
@@ -1953,9 +2109,44 @@ function viewRadio(){
       h+='<p class="hint" style="margin:0 0 9px">收了 '+list.length+
          ' 个台，最近收的排在前头。点实心的 <b>★</b> 就移出去。</p>';
     }
-    h+='<div class="stgrid">';
-    for(var j=0;j<list.length;j++){ h+=stCardHTML(list[j], a.indexOf(list[j])); }
-    h+='</div>';
+    /* 收藏多了（≥13 个）就按省份/分类分组，免得一长条翻半天；
+       少的时候不平铺分组，省得一个组里孤零零一个台。 */
+    if(cur==='收藏' && list.length>=13 && !kw){
+      var ORDER=['央广','国广'].concat(PROVS).concat(['交通台','新闻综合','教育台','戏曲',
+        '说书','文艺','音乐','怀旧老歌','网络台','电视伴音','自建']);
+      var used={}, groups=[];
+      for(var oi=0;oi<ORDER.length;oi++){
+        var key=ORDER[oi];
+        var sub=list.filter(function(x){
+          var gg=x.g||[x.c];
+          if(key==='自建') return !!x.custom;
+          if(key==='央广'||key==='国广') return gg.indexOf(key)>=0;
+          if(PROVS.indexOf(key)>=0) return gg.indexOf(key)>=0;
+          return gg.indexOf(key)>=0;
+        });
+        if(sub.length){ used[key]=1; groups.push([key, sub]); }
+      }
+      /* 没归进任何组的（比如只带了自定义标签）兜在最后 */
+      var rest=list.filter(function(x){
+        var gg=x.g||[x.c];
+        for(var k=0;k<groups.length;k++){ if(groups[k][1].indexOf(x)>=0) return false; }
+        return true;
+      });
+      if(rest.length) groups.push(['其余', rest]);
+      for(var gi=0;gi<groups.length;gi++){
+        h+='<div class="grp"><div class="ghd"><h3>'+esc(groups[gi][0])+
+           '<span class="cn">'+groups[gi][1].length+'</span></h3></div>';
+        h+='<div class="stgrid">';
+        for(var gj=0;gj<groups[gi][1].length;gj++){
+          h+=stCardHTML(groups[gi][1][gj], a.indexOf(groups[gi][1][gj]));
+        }
+        h+='</div></div>';
+      }
+    }else{
+      h+='<div class="stgrid">';
+      for(var j=0;j<list.length;j++){ h+=stCardHTML(list[j], a.indexOf(list[j])); }
+      h+='</div>';
+    }
   }
 
   // 常听的台已收进上方「收藏」分类，不再重复成卡
@@ -2019,17 +2210,25 @@ function viewHelp(){
   '<h3>三步就够</h3><ol>'+
   '<li><b>选台</b>——「戏台」页里挑一个，点一下就开始放。</li>'+
   '<li><b>换台</b>——底部左右两个旋钮，左边上一台，右边下一台；中间的圆钮是开关。</li>'+
-  '<li><b>定时</b>——右上角 ⚙ 里可以设 15 分到 1.5 小时自动关机，睡着也不怕。</li>'+
+  '<li><b>定时</b>——右上角 ⚙ 里可以设 15 分到 1.5 小时自动关机，到点前 20 秒音量会慢慢收下去，'+
+  '不会被猛地掐断；也可以选<b>播完就停</b>，把「拾藏」里的一段戏听完自动关。</li>'+
   '</ol>'+
   '<h3>把喜欢的台收起来</h3>'+
   '<p>两种手势都行：点台卡片右上角的 <b>☆</b>，或者按底部播放条上的 <b>☆</b>（收的正是正在听的那个台）。'+
   '长按卡片也可以。收好之后，在「戏台」页顶上点 <b>收藏</b> 那一类，就只剩你收的台，找起来不用翻。</p>'+
+  '<p>收得多了（超过 12 个），收藏里会自动<b>按央广 / 各省 / 各类分开摆</b>，自己加进去的台也在里头，不会混成一长条。</p>'+
+  '<h3>找台更快</h3>'+
+  '<p>搜索框除了台名和省份，还认<b>拼音首字母</b>——打 <code>nbxw</code> 就能找到「宁波新闻综合广播」，'+
+  '打 <code>hnjt</code> 出「河南交通广播」。想不起全名时这个最省事。</p>'+
+  '<h3>信号断了会自己接回去</h3>'+
+  '<p>听着听着没声了，不用重新点：它会先试着<b>原地接回去</b>（最多 4 次，间隔越来越长），'+
+  '还是不行才跳到下一个台。底部会写着「正在接回去（第 几次）」。</p>'+
   '<h3>听过的记录</h3>'+
   '<p>「戏台」页下面有一栏<b>最近听过</b>，点台名就接着听，最多留 12 条，只记在这台设备上。'+
   '不想留就按那一栏右上角的<b>一键清零</b>，收藏不会跟着掉。</p>'+
   '<h3>放自己下载的戏</h3>'+
   '<p>「拾藏」页可以直接把音频文件、甚至整个文件夹拖进去。放进去之后关掉页面再打开还在，'+
-  '听到一半退出去，下次接着听。</p>'+
+  '听到一半退出去，下次接着听；一段放完会自动接下一段。</p>'+
   '<h3>自己加台</h3>'+
   '<p>「戏台」页最下面可以填名字和地址加台。地址一般是 <code>.mp3</code> 或 <code>.m3u8</code> 结尾的直播流。</p>'+
   '<h3>换到手机上用</h3>'+
@@ -2045,6 +2244,12 @@ function viewFaq(){
   ['为什么有的台点了没声音？',
    '广播台的直播流地址会不定期更换，这是网络电台的通病。它在连不上时会自动试几条备用线路；'+
    '如果都不行，会提示你换台。发现某个台长期连不上，可以自己加一条新地址顶替它。'],
+  ['听到一半突然没声了，要重新点吗？',
+   '不用。听着的时候信号断了，它会自己<b>原地接回去</b>——最多试 4 次，间隔一次比一次长（1.5 秒 / 3 秒 / 6 秒 / 12 秒），'+
+   '底部会显示「正在接回去（第几次）」。仍然不行才跳到下一个台。'],
+  ['搜索能打拼音吗？',
+   '能。除台名和省份之外，打<b>拼音首字母</b>最省事：<code>nbxw</code> → 宁波新闻综合广播，'+
+   '<code>hnjt</code> → 河南交通广播，<code>xq</code> → 戏曲类里的台。'],
   ['为什么有的台我点了，提示不支持？',
    '标着 <b>HLS</b> 的台，用的是 <code>.m3u8</code> 切片流。电脑上的 Edge、Safari，和苹果手机上的浏览器'+
    '可以直接播；安卓上的 Chrome 一般不行。把同类的 <b>MP3</b> 台挑出来听就行——比如戏曲类里大部分都是 MP3 的。'],
@@ -2142,7 +2347,11 @@ function viewAbout(){
   '<tr><td>形态</td><td>单个 HTML 文件，约 477 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装</td></tr>'+
   '<tr><td>播放</td><td>浏览器原生 Audio + 内嵌 hls.js（安卓 Chrome 也能播 HLS）；MP3 与 m3u8 直播流</td></tr>'+
   '<tr><td>内置台</td><td>'+STATIONS.length+' 个电台，按央广 / 国广 / 地方台（再分 31 省） / 交通台 / 新闻综合 / 教育台 / 戏曲 / 说书 / 文艺 / 音乐 / 怀旧老歌 / 网络台 / 电视伴音分类，全部逐台试播验证</td></tr>'+
-  '<tr><td>本地库</td><td>IndexedDB 存储，元数据与二进制分开存放，支持断点续播</td></tr>'+
+  '<tr><td>本地库</td><td>IndexedDB 存储，元数据与二进制分开存放，支持断点续播与顺序连播</td></tr>'+
+  '<tr><td>收藏</td><td>卡片星标 / 播放条星标 / 长按三种手势；收藏超过 12 个自动按省份与分类分组</td></tr>'+
+  '<tr><td>搜索</td><td>台名、省份、分类，以及拼音首字母（nbxw → 宁波新闻综合广播）</td></tr>'+
+  '<tr><td>断线</td><td>信号断了先原地重连 4 次（间隔递增），仍不行才自动跳台</td></tr>'+
+  '<tr><td>定时</td><td>15 分 / 30 分 / 1 小时 / 1.5 小时后关机，到点前 20 秒音量渐弱；也支持「播完一段就停」</td></tr>'+
   '<tr><td>设置</td><td>localStorage 保存，可导出 / 导入 JSON 备份</td></tr>'+
   '<tr><td>隐私</td><td>零采集、零上报、零第三方请求（仅播放时直连电台本身）</td></tr>'+
   '</table>'+
@@ -2463,7 +2672,11 @@ document.addEventListener('click', function(e){
   var ui=t.getAttribute('data-ui'); if(ui){ S.ui=parseFloat(ui); save(); applyAll(); return; }
   var tp=t.getAttribute('data-tap'); if(tp){ S.tap=parseInt(tp,10); save(); applyAll(); return; }
   var mo=t.getAttribute('data-mo'); if(mo){ S.motion=mo; save(); applyAll(); return; }
-  var sl=t.getAttribute('data-sl'); if(sl){ setSleep(parseInt(sl,10)); applyAll(); toast(sl==='0'?'不定时了':('到点自动关机：'+sl+' 分钟')); return; }
+  var sl=t.getAttribute('data-sl'); if(sl){
+    var sv=parseInt(sl,10);
+    setSleep(sv); applyAll();
+    toast(sv===0?'不定时了':(sv<0?'这一段放完就停':'到点自动关机：'+sv+' 分钟'));
+    return; }
   var rs=t.getAttribute('data-rs'); if(rs){ S.resume=parseInt(rs,10); save(); applyAll(); return; }
   var sk=t.getAttribute('data-sk'); if(sk){ S.skip=parseInt(sk,10); save(); applyAll(); return; }
 });

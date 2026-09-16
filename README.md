@@ -21,14 +21,15 @@
 | 模块 | 说明 |
 |---|---|
 | **戏台** | **909 个电台**，按 央广 / 国广 / 地方台（再分 31 省，含大量地级市台）/ 交通台 / 新闻综合 / 教育台 / 戏曲 / 说书 / 文艺 / 音乐 / 怀旧老歌 / 网络台 / 电视伴音 分类。"地方台"选中后还能按下排 31 个省份再筛一层，省里再收着地级市台（苏州、宁波、唐山、徐州…）。**每一个都经真浏览器逐台试播验证** |
-| **搜索** | 台名与分类都能搜，909 个台里秒找「河南」「评书」「央视」 |
+| **搜索** | 台名、分类、拼音首字母三路一起搜 —— 打「hnt」出河南台、「pingshu」出评书台，909 个台里秒找「河南」「评书」「央视」 |
 | **锁屏控制** | 手机上锁屏 / 通知栏显示台名，支持耳机线控切台 |
 | **拾藏** | 把自己下载的戏、评书、相声收进来（支持整文件夹、可拖放），存在本机 IndexedDB，断网照听、听到哪记到哪 |
 | **匣子外观** | 木纹外壳 + 扬声器网罩 + 调频窗，指针随台移动、放送时电平表跳动 |
 | **收藏** | 喜欢的台点卡片右上角的 **☆**（或底部播放条上的 **☆**，收的正是正在听的那个）就收进来；顶上「**收藏**」那一类里，收过的台一按就到。播放条星标随时能收、能取消 |
 | **最近听过** | 自动记下听过的台（最多 12 条，只存本机），点台名接着听；不想要了按「一键清零」，收藏不受影响 |
 | **换台** | 左右旋钮换台，中间圆钮开关；长按卡片也能收藏 |
-| **定时关机** | 15 分 / 30 分 / 1 小时 / 1.5 小时 —— 听着睡着也不怕 |
+| **定时关机** | 15 分 / 30 分 / 1 小时 / 1.5 小时，还能设「**播完就停**」；到点前 20 秒**音量缓缓收小**再停，不惊醒人 —— 听着睡着也不怕 |
+| **断线自愈** | 信号断了**原地自动重接**（1.5 / 3 / 6 / 12 秒各试一次），接得上就接着放，接不上才换台 |
 | **其他** | 自建台、深浅色、四档字号、大触控模式、减弱动效、设置导出导入 |
 
 ### 怎么用
@@ -57,7 +58,7 @@
 
 | 项目 | 说明 |
 |---|---|
-| 形态 | 单个 HTML 文件，约 477 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
+| 形态 | 单个 HTML 文件，约 487 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
 | 播放 | 浏览器原生 `Audio` + 内嵌 hls.js；MP3 直播流与 HLS（m3u8）切片流 |
 | 本地库 | IndexedDB，元数据与二进制分库存放，支持断点续播 |
 | 设置 | localStorage 保存，可导出 / 导入 JSON 备份 |
@@ -90,8 +91,10 @@ Works in mobile browsers too — you can "Add to Home Screen" and use it like an
 | **Radio shell** | Wood-grain cabinet, speaker grille and a tuning window whose needle follows the station; a VU meter pulses during playback |
 | **Favourites** | Tap the **☆** on a card — or the **☆** on the player bar, which bookmarks exactly what you are listening to — and the station lands in a dedicated "**Favourites**" category at the top of the list. The player-bar star toggles it on and off at any time |
 | **Recently played** | The app keeps the last 12 stations you listened to (locally only); tap a name to resume, or hit "clear" to wipe the list — favourites are untouched |
+| **Search** | Station name, category and **pinyin initials** all searchable — type "hnt" for Henan stations or "pingshu" for storytelling; find any of the 909 in a second |
 | **Tuning** | Turn the left/right knobs to change station, the centre knob to toggle play; long-press a card to bookmark too |
-| **Sleep timer** | 15 min / 30 min / 1 h / 1.5 h — safe to fall asleep to |
+| **Sleep timer** | 15 min / 30 min / 1 h / 1.5 h, plus "**stop after this**"; the volume **fades out over the last 20 seconds** — safe to fall asleep to |
+| **Auto-reconnect** | If the stream drops, the app **retries in place** (1.5 / 3 / 6 / 12 s) and only switches station if it cannot get back |
 | **Extras** | Add your own stations, light/dark themes, four font sizes, large-touch mode, reduced motion, settings export/import |
 
 ### How to use
@@ -119,7 +122,7 @@ Works in mobile browsers too — you can "Add to Home Screen" and use it like an
 
 | Item | Detail |
 |---|---|
-| Form | A single HTML file, ~477 KB (with the embedded hls.js engine), no dependencies, no CDN, no install |
+| Form | A single HTML file, ~487 KB (with the embedded hls.js engine), no dependencies, no CDN, no install |
 | Playback | Native browser `Audio` + embedded hls.js; MP3 live streams and HLS (m3u8) segments |
 | Local library | IndexedDB, metadata and binary stored separately, resume supported |
 | Settings | Saved in localStorage, exportable / importable as JSON |
