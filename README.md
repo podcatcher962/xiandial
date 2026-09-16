@@ -20,7 +20,9 @@
 
 | 模块 | 说明 |
 |---|---|
-| **戏台** | 52 个电台，分京戏 / 地方戏 / 说书 / 文艺 / 怀旧老歌五类。**每一个都经真浏览器逐台试播验证** |
+| **戏台** | **139 个电台**，分央广 / 戏曲 / 说书 / 文艺 / 怀旧老歌 / 电视伴音六类。**每一个都经真浏览器逐台试播验证** |
+| **搜索** | 台名与分类都能搜，139 个台里秒找「河南」「评书」「央视」 |
+| **锁屏控制** | 手机上锁屏 / 通知栏显示台名，支持耳机线控切台 |
 | **拾藏** | 把自己下载的戏、评书、相声收进来（支持整文件夹、可拖放），存在本机 IndexedDB，断网照听、听到哪记到哪 |
 | **匣子外观** | 木纹外壳 + 扬声器网罩 + 调频窗，指针随台移动、放送时电平表跳动 |
 | **换台** | 左右旋钮换台，中间圆钮开关；长按卡片收藏 |
@@ -37,8 +39,9 @@
 
 ### 已知限制
 
+- **中央广播电视总台（央广）13 套**与**央视 / 省级卫视伴音**已内置；伴音流来自公开网络，若失效可在「自己加一个台」里换成新地址。
 - **直播流地址会不定期更换**，这是网络电台的通病。程序在连不上时会自动试备用线路，但仍可能个别台失效。
-- **HLS（.m3u8）流**在桌面版 Edge / Safari 上可原生播放；部分安卓浏览器不支持，程序会给这类台标 `HLS` 徽章提示。
+- **HLS（.m3u8）流**已内嵌 hls.js 播放引擎 —— 桌面 Edge / Safari 走原生通道，安卓 Chrome 等浏览器由 hls.js 接管，**都能直接播**（央视与卫视伴音基本是 HLS）。
 - 电台地址来自公开电台目录与各广播机构公开提供的直播流。
 
 ### 免责声明
@@ -53,8 +56,8 @@
 
 | 项目 | 说明 |
 |---|---|
-| 形态 | 单个 HTML 文件，约 255 KB（含内嵌开屏海报），无依赖、无 CDN、无联网安装 |
-| 播放 | 浏览器原生 `Audio`；MP3 直播流与 HLS（m3u8）切片流 |
+| 形态 | 单个 HTML 文件，约 570 KB（含内嵌开屏海报与 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
+| 播放 | 浏览器原生 `Audio` + 内嵌 hls.js；MP3 直播流与 HLS（m3u8）切片流 |
 | 本地库 | IndexedDB，元数据与二进制分库存放，支持断点续播 |
 | 设置 | localStorage 保存，可导出 / 导入 JSON 备份 |
 | 隐私 | 零采集、零上报、零第三方请求（仅播放时直连电台本身） |
@@ -99,7 +102,7 @@ Works in mobile browsers too — you can "Add to Home Screen" and use it like an
 ### Known limitations
 
 - **Live stream URLs change from time to time** — a common problem for internet radio. The app automatically retries backup routes, but individual stations may still go offline.
-- **HLS (.m3u8) streams** play natively on desktop Edge / Safari; some Android browsers do not support them, and such stations are marked with an `HLS` badge.
+- **HLS (.m3u8) streams** are handled by an embedded hls.js engine: desktop Edge / Safari use their native HLS path, while Android Chrome and others are driven by hls.js. Both work (most CCTV and provincial-satellite feeds are HLS).
 - Station addresses come from public radio directories and streams publicly provided by broadcasters.
 
 ### Disclaimer
@@ -114,8 +117,8 @@ Works in mobile browsers too — you can "Add to Home Screen" and use it like an
 
 | Item | Detail |
 |---|---|
-| Form | A single HTML file, ~255 KB (with the embedded splash poster), no dependencies, no CDN, no install |
-| Playback | Native browser `Audio`; MP3 live streams and HLS (m3u8) segments |
+| Form | A single HTML file, ~570 KB (with the embedded splash poster and hls.js engine), no dependencies, no CDN, no install |
+| Playback | Native browser `Audio` + embedded hls.js; MP3 live streams and HLS (m3u8) segments |
 | Local library | IndexedDB, metadata and binary stored separately, resume supported |
 | Settings | Saved in localStorage, exportable / importable as JSON |
 | Privacy | Zero collection, zero telemetry, zero third-party requests (only direct connections to the stations themselves) |
