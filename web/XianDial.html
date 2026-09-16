@@ -1532,6 +1532,22 @@ var PY = (function(){
 })();
 
 /* 中转拼音首字母串，例如「宁波新闻综合广播」→ nbxwzhgb */
+/* 全拼表：台名 / 分类名里会出现的字 + 一批常见繁体（两个版本并集，307 字）。
+   生成自常用读音，只收用得上的字，省体积；台单加台后重跑 _gen_fp.py 刷新。 */
+var FP={"a":"阿","ai":"靉","an":"安","ao":"澳","bai":"百","ban":"伴班","bao":"報报","bei":"北","ben":"本","bo":"播波","bu":"怖","cang":"藏","ce":"測","chang":"場","chao":"潮","che":"車","cheng":"城","chong":"蟲","chuan":"传川船","ci":"次","da":"大","dao":"導岛島","de":"德的","di":"地","dian":"典店电電","diao":"調","die":"碟","dong":"东动東","dou":"都","duan":"端","fang":"方","fei":"飛飞","fen":"分","feng":"風鳳","fu":"福","gan":"甘","gang":"港","gao":"高","ge":"歌","gong":"公工","gu":"古","guan":"關館","guang":"广廣","gui":"贵","guo":"国國","hai":"海","han":"漢韩","hao":"好","he":"合河","hei":"黑","hu":"湖","hua":"化华花華话","huai":"怀懷","huan":"歡環","hui":"徽","ji":"吉基機濟記際","jia":"嘉家","jian":"健建間间","jiang":"江疆","jiao":"交教","jie":"街","jin":"津金","jing":"京經","jiu":"旧","kai":"凱","kang":"康","ke":"客科","kong":"恐","lan":"兰","lang":"郎","lao":"勞老","le":"乐樂","li":"利栗里麗","lian":"联聯蓮連","liao":"辽","lin":"林","ling":"嶺領","liu":"流","long":"隆龍龙","lou":"樓","lu":"路","lun":"輪","luo":"络罗","ma":"馬马","man":"漫","mei":"每美","men":"門门","meng":"蒙","miao":"苗","min":"民","ming":"銘","nan":"南","nei":"内","nian":"年","niao":"鳥","ning":"宁","niu":"纽","nong":"农農","ou":"欧歐","pin":"频","ping":"屏","pu":"普浦","qi":"其","qian":"千牽","qiao":"橋","qing":"庆慶輕青","qiu":"球","qu":"区區曲","quan":"全","ren":"人","ri":"日","sai":"塞","sha":"厦","shan":"山陕","shang":"上","shao":"少","shen":"神","sheng":"勝声聲","shi":"事市師視视試識","shou":"手","shu":"书書樹","shui":"水","shuo":"说","si":"司四斯","song":"松鬆","su":"肃苏","ta":"他","tai":"台太","tan":"灘","tao":"桃","te":"特","ti":"體","tian":"天","ting":"听庭聽","tong":"通","tu":"图","tun":"屯","wai":"外","wan":"湾灣","wang":"網网","wei":"卫","wen":"文聞闻","wu":"五无","xi":"喜戏戲溪西","xia":"下夏","xian":"先線縣线限","xiang":"乡巷鄉香","xin":"新","xing":"幸星行","xiong":"雄","xiu":"袖","xuan":"旋","xue":"學雪","ya":"亚亞牙雅","yan":"燕","yang":"央揚洋阳陽","yao":"藥","ye":"业","yi":"一义意艺藝醫","yin":"陰音","you":"友遊","yu":"嶼漁育語语雨魚","yuan":"園","yue":"约","yun":"云雲","zai":"在","zhang":"彰","zhe":"浙","zhen":"鎮","zheng":"正","zhi":"之知至","zhong":"中重钟","zhou":"周州洲","zhu":"竹","zhuo":"濁","zi":"子","zong":"综"};
+/* 反向表：汉字 → 全拼（首次用到时建好，避免每次搜索重扫） */
+var FPX=null;
+function fullPy(str){
+  if(!str) return '';
+  if(!FPX){ FPX={}; for(var k in FP){ var cs=FP[k]; for(var i=0;i<cs.length;i++) FPX[cs.charAt(i)]=k; } }
+  var out='';
+  for(var j=0;j<str.length;j++){
+    var c=str.charAt(j), p=FPX[c];
+    out += (p || c.toLowerCase());
+  }
+  return out.replace(/[^a-z0-9]/g,'');
+}
+
 function pyOf(str){
   if(!str) return '';
   var out='';
@@ -2053,6 +2069,9 @@ function viewRadio(){
   h+='<div class="chips grid" id="catChips">';
   for(var i=0;i<cats.length;i++){
     var c=cats[i], n=(c==='全部')?a.length:a.filter(function(x){ return inCat(x,c); }).length;
+    /* 空分类不摆出来，免得点进去是空的。
+       「全部」与「收藏」例外：「收藏」是入口，空着也要在，好让人知道有这功能。 */
+    if(n===0 && c!=='全部' && c!=='收藏') continue;
     h+='<button class="chip'+(cur===c?' on':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'<span class="cn">'+n+'</span></button>';
   }
   h+='</div>';
@@ -2091,9 +2110,13 @@ function viewRadio(){
     list=list.filter(function(x){
       var blob=(x.n+' '+(x.c||'')+' '+((x.g||[]).join(' '))).toLowerCase();
       if(blob.indexOf(kw)>=0) return true;
-      /* 拼音通道：关键词是字母时，比台名的首字母串（nbxw → 宁波新闻综合广播） */
-      if(kwpy && pyOf(x.n).indexOf(kwpy)>=0) return true;
-      if(kwpy && pyOf((x.g||[]).join('')).indexOf(kwpy)>=0) return true;
+      if(!kwpy) return false;
+      /* 拼音通道：关键词是字母时，同时比「全拼」与「首字母串」——
+         全拼收 henan / xianggang 这种整词，首字母收 nbxw 这种缩写 */
+      var full=fullPy(x.n), ini=pyOf(x.n);
+      if(full.indexOf(kwpy)>=0 || ini.indexOf(kwpy)>=0) return true;
+      var gtxt=(x.g||[]).join('');
+      if(fullPy(gtxt).indexOf(kwpy)>=0 || pyOf(gtxt).indexOf(kwpy)>=0) return true;
       return false;
     });
     h+='<div class="card" style="padding:11px 15px"><p class="hint" style="margin:0">'+
@@ -2218,8 +2241,9 @@ function viewHelp(){
   '长按卡片也可以。收好之后，在「戏台」页顶上点 <b>收藏</b> 那一类，就只剩你收的台，找起来不用翻。</p>'+
   '<p>收得多了（超过 12 个），收藏里会自动<b>按央广 / 各省 / 各类分开摆</b>，自己加进去的台也在里头，不会混成一长条。</p>'+
   '<h3>找台更快</h3>'+
-  '<p>搜索框除了台名和省份，还认<b>拼音首字母</b>——打 <code>nbxw</code> 就能找到「宁波新闻综合广播」，'+
-  '打 <code>hnjt</code> 出「河南交通广播」。想不起全名时这个最省事。</p>'+
+  '<p>搜索框除了台名和省份，还认<b>拼音</b>——首字母和全拼都行：'+
+  '打 <code>nbxw</code> 就能找到「宁波新闻综合广播」，打 <code>henan</code> 出河南台，'+
+  '打 <code>xianggang</code> 出香港台。想不起全名时这个最省事。</p>'+
   '<h3>信号断了会自己接回去</h3>'+
   '<p>听着听着没声了，不用重新点：它会先试着<b>原地接回去</b>（最多 4 次，间隔越来越长），'+
   '还是不行才跳到下一个台。底部会写着「正在接回去（第 几次）」。</p>'+
@@ -2248,7 +2272,8 @@ function viewFaq(){
    '不用。听着的时候信号断了，它会自己<b>原地接回去</b>——最多试 4 次，间隔一次比一次长（1.5 秒 / 3 秒 / 6 秒 / 12 秒），'+
    '底部会显示「正在接回去（第几次）」。仍然不行才跳到下一个台。'],
   ['搜索能打拼音吗？',
-   '能。除台名和省份之外，打<b>拼音首字母</b>最省事：<code>nbxw</code> → 宁波新闻综合广播，'+
+   '能。除台名和省份之外，打<b>拼音</b>最省事，首字母和全拼都认：'+
+   '<code>nbxw</code> → 宁波新闻综合广播，<code>henan</code> → 河南台，'+
    '<code>hnjt</code> → 河南交通广播，<code>xq</code> → 戏曲类里的台。'],
   ['为什么有的台我点了，提示不支持？',
    '标着 <b>HLS</b> 的台，用的是 <code>.m3u8</code> 切片流。电脑上的 Edge、Safari，和苹果手机上的浏览器'+
@@ -2344,12 +2369,12 @@ function viewAbout(){
   '<h3>技术说明</h3>'+
   '<table>'+
   '<tr><th>项目</th><th>说明</th></tr>'+
-  '<tr><td>形态</td><td>单个 HTML 文件，约 477 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装</td></tr>'+
+  '<tr><td>形态</td><td>单个 HTML 文件，约 491 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装</td></tr>'+
   '<tr><td>播放</td><td>浏览器原生 Audio + 内嵌 hls.js（安卓 Chrome 也能播 HLS）；MP3 与 m3u8 直播流</td></tr>'+
   '<tr><td>内置台</td><td>'+STATIONS.length+' 个电台，按央广 / 国广 / 地方台（再分 31 省） / 交通台 / 新闻综合 / 教育台 / 戏曲 / 说书 / 文艺 / 音乐 / 怀旧老歌 / 网络台 / 电视伴音分类，全部逐台试播验证</td></tr>'+
   '<tr><td>本地库</td><td>IndexedDB 存储，元数据与二进制分开存放，支持断点续播与顺序连播</td></tr>'+
   '<tr><td>收藏</td><td>卡片星标 / 播放条星标 / 长按三种手势；收藏超过 12 个自动按省份与分类分组</td></tr>'+
-  '<tr><td>搜索</td><td>台名、省份、分类，以及拼音首字母（nbxw → 宁波新闻综合广播）</td></tr>'+
+  '<tr><td>搜索</td><td>台名、省份、分类，以及拼音（全拼与首字母都认：henan / nbxw）</td></tr>'+
   '<tr><td>断线</td><td>信号断了先原地重连 4 次（间隔递增），仍不行才自动跳台</td></tr>'+
   '<tr><td>定时</td><td>15 分 / 30 分 / 1 小时 / 1.5 小时后关机，到点前 20 秒音量渐弱；也支持「播完一段就停」</td></tr>'+
   '<tr><td>设置</td><td>localStorage 保存，可导出 / 导入 JSON 备份</td></tr>'+

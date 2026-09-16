@@ -58,7 +58,7 @@
 
 | 项目 | 说明 |
 |---|---|
-| 形态 | 单个 HTML 文件，约 487 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
+| 形态 | 单个 HTML 文件，约 491 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
 | 播放 | 浏览器原生 `Audio` + 内嵌 hls.js；MP3 直播流与 HLS（m3u8）切片流 |
 | 本地库 | IndexedDB，元数据与二进制分库存放，支持断点续播 |
 | 设置 | localStorage 保存，可导出 / 导入 JSON 备份 |
@@ -92,6 +92,7 @@ Works in mobile browsers too — you can "Add to Home Screen" and use it like an
 | **Favourites** | Tap the **☆** on a card — or the **☆** on the player bar, which bookmarks exactly what you are listening to — and the station lands in a dedicated "**Favourites**" category at the top of the list. The player-bar star toggles it on and off at any time |
 | **Recently played** | The app keeps the last 12 stations you listened to (locally only); tap a name to resume, or hit "clear" to wipe the list — favourites are untouched |
 | **Search** | Station name, category and **pinyin initials** all searchable — type "hnt" for Henan stations or "pingshu" for storytelling; find any of the 909 in a second |
+| **Search** | Station name, category and **pinyin initials** all searchable — type "hnt" for Henan stations or "pingshu" for storytelling; find any of the 909 in a second |
 | **Tuning** | Turn the left/right knobs to change station, the centre knob to toggle play; long-press a card to bookmark too |
 | **Sleep timer** | 15 min / 30 min / 1 h / 1.5 h, plus "**stop after this**"; the volume **fades out over the last 20 seconds** — safe to fall asleep to |
 | **Auto-reconnect** | If the stream drops, the app **retries in place** (1.5 / 3 / 6 / 12 s) and only switches station if it cannot get back |
@@ -122,7 +123,7 @@ Works in mobile browsers too — you can "Add to Home Screen" and use it like an
 
 | Item | Detail |
 |---|---|
-| Form | A single HTML file, ~487 KB (with the embedded hls.js engine), no dependencies, no CDN, no install |
+| Form | A single HTML file, ~491 KB (with the embedded hls.js engine), no dependencies, no CDN, no install |
 | Playback | Native browser `Audio` + embedded hls.js; MP3 live streams and HLS (m3u8) segments |
 | Local library | IndexedDB, metadata and binary stored separately, resume supported |
 | Settings | Saved in localStorage, exportable / importable as JSON |
