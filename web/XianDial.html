@@ -158,7 +158,14 @@ p{margin:7px 0;color:var(--tx2)}
 .chips{display:flex;gap:7px;margin:9px 0;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
 .chips::-webkit-scrollbar{display:none}
 /* 分类条：网格铺满整行，不浪费右侧空间，所有选项一眼可见 */
-.chips.grid{display:grid;gap:7px;margin:9px 0;overflow:visible;padding:0}
+.chips.grid{
+  display:grid;gap:7px;margin:9px 0;overflow:visible;padding:0;
+  /* auto-fill：条目少的时候也不会被撑满一整行（auto-fit 会把空轨道折算掉） */
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+}
+/* 历史条目：台名有长有短，允许折行，别把字挤出去 */
+#histChips{grid-template-columns:repeat(auto-fill,minmax(172px,1fr))}
+#histChips .chip{white-space:normal;line-height:1.3;padding:8px 11px}
 .chips.grid .chip{flex:none;width:100%;min-width:0;justify-content:center}
 #catChips{grid-template-columns:repeat(auto-fit,minmax(122px,1fr))}
 #provChips{grid-template-columns:repeat(auto-fit,minmax(86px,1fr));row-gap:6px;
@@ -187,11 +194,31 @@ p{margin:7px 0;color:var(--tx2)}
   background:var(--card);border:1px solid var(--line);border-radius:10px;
   padding:11px 12px;text-align:left;display:flex;flex-direction:column;gap:5px;
   min-height:calc(72px * var(--ui));transition:border-color .18s,transform .12s;
+  cursor:pointer;position:relative;
 }
 .st:hover{border-color:var(--acc)}
 .st:active{transform:scale(.985)}
+.st:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .st.cur{border-color:var(--dan);background:var(--card2);box-shadow:0 0 0 1px var(--dan) inset}
-.st .n{font-size:calc(15px * var(--ui));font-weight:600;line-height:1.35}
+.st .r1{display:flex;gap:6px;align-items:flex-start}
+.st .n{font-size:calc(15px * var(--ui));font-weight:600;line-height:1.35;flex:1 1 auto;min-width:0}
+.favb{
+  flex:0 0 auto;width:calc(28px * var(--ui));height:calc(28px * var(--ui));margin:-3px -4px 0 0;
+  border-radius:8px;background:transparent;border:1px solid transparent;
+  color:var(--tx2);font-size:calc(15px * var(--ui));line-height:1;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
+  position:relative;
+}
+/* 星标看着不大，热区撑到 44px，手指按得中（不越出卡片） */
+.favb::after{
+  content:"";position:absolute;left:50%;top:50%;
+  width:calc(44px * var(--ui));height:calc(44px * var(--ui));
+  transform:translate(-50%,-50%);
+}
+.favb:hover{border-color:var(--line);background:var(--card2)}
+.favb.on{color:var(--warn)}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;flex-wrap:wrap}
+.hd h3{margin:0}
 .st .m{font-size:calc(11.5px * var(--ui));color:var(--tx2);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .tagc{
   font-size:calc(10.5px * var(--ui));padding:1px 7px;border-radius:999px;
@@ -233,6 +260,15 @@ p{margin:7px 0;color:var(--tx2)}
   transform:rotate(var(--rot,0deg));transition:transform .2s;
 }
 .knob:active{filter:brightness(1.2)}
+.favk{
+  width:44px;height:44px;min-width:44px;border-radius:50%;
+  background:var(--card2);border:1px solid var(--line);color:var(--tx2);
+  font-size:calc(18px * var(--ui));line-height:1;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.favk:hover{border-color:var(--acc)}
+.favk:active{transform:scale(.94)}
+.favk.on{color:var(--warn);border-color:var(--warn)}
 .volbox{display:flex;align-items:center;gap:7px}
 .volmeter{width:56px;height:6px;border-radius:4px;background:var(--card2);overflow:hidden;border:1px solid var(--line)}
 .volmeter i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),var(--warn));width:60%;transition:width .2s}
@@ -297,6 +333,7 @@ th{background:var(--card2);color:var(--tx)}
   .stgrid{grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:8px}
   .st{padding:10px 11px;min-height:calc(66px * var(--ui))}
   .st .n{font-size:calc(14.5px * var(--ui))}
+  .favk{width:40px;height:40px;min-width:40px}
 }
 /* 搜索框 */
 .qbox{display:flex;align-items:center;gap:9px;margin:11px 0 2px;background:var(--card2);
@@ -351,6 +388,7 @@ th{background:var(--card2);color:var(--tx)}
       <div class="t" id="nowT">还没有选台</div>
       <div class="s" id="nowS">点上面任意一个戏台，就能开声了</div>
     </div>
+    <button class="favk" id="btnFav" title="收藏这个台" aria-label="收藏这个台" style="display:none">☆</button>
     <span id="sleepBadge" style="display:none"></span>
     <div class="volbox">
       <button class="chip" id="btnVolDown" aria-label="音量减小">−</button>
@@ -1344,7 +1382,8 @@ var CATS=["央广","国广","地方台","交通台","新闻综合","教育台","
 var PROVS=["北京","天津","上海","重庆","河北","山西","内蒙古","辽宁","吉林","黑龙江",
            "江苏","浙江","安徽","福建","江西","山东","河南","湖北","湖南",
            "广东","广西","海南","四川","贵州","云南","西藏","陕西","甘肃","青海","宁夏","新疆"];
-var CATDESC={ "央广":"中央广播电视总台央广 16 套广播，含对港台广播",
+var CATDESC={ "收藏":"自己收起来的台，点卡片右上角的实心星就能移出去",
+              "央广":"中央广播电视总台央广 16 套广播，含对港台广播",
               "国广":"中央广播电视总台国广（CRI）对外广播",
               "地方台":"各省市县广播，选中后再按下排省份挑；苏州、宁波、唐山这类地级市台都在里头",
               "交通台":"各省市交通广播，路况与车厢里放的那些",
@@ -1362,6 +1401,7 @@ var CATDESC={ "央广":"中央广播电视总台央广 16 套广播，含对港�
 function inCat(x,c){
   if(c==='全部') return true;
   if(c==='自建') return !!x.custom;
+  if(c==='收藏') return isFav(x.u);
   var g=x.g||[x.c];
   if(c==='地方台'){
     for(var i=0;i<PROVS.length;i++){ if(g.indexOf(PROVS[i])>=0) return true; }
@@ -1490,6 +1530,7 @@ function setNow(){
   $('nowS').textContent=(P.url? st+extra : st);
   $('tunerName').textContent=P.name||'待开机';
   $('btnPlay').textContent=(P.state==='playing')?'❚❚':'▶';
+  syncFavBtn();
   document.body.classList.toggle('playing', P.state==='playing');
   setMediaSession();
 }
@@ -1517,6 +1558,18 @@ function setMediaSession(){
     });
   }catch(e){}
 }
+/* 底部播放条上的星标：亮不亮、显不显，都看当前这个台在不在收藏里 */
+function syncFavBtn(){
+  var fb=$('btnFav');
+  if(!fb) return;
+  var canFav=!!P.url && P.url.indexOf('local:')!==0;   // 「拾藏」里的音频不参与收藏
+  var on=canFav && isFav(P.url);
+  fb.style.display=canFav?'flex':'none';
+  fb.textContent=on?'★':'☆';
+  fb.classList.toggle('on', on);
+  fb.title=on?'取消收藏':'收进收藏';
+}
+
 function setNeedle(){
   var a=allStations(), i=0;
   for(var k=0;k<a.length;k++){ if(a[k].u===P.url){ i=k; break; } }
@@ -1818,17 +1871,21 @@ function render(){
 function stCardHTML(s, i){
   var cur=(P.url===s.u);
   var lamp=cur? (P.state==='error'?'<span class="dot f"></span>':'<span class="dot"></span>') : '';
-  return '<button class="st'+(cur?' cur':'')+'" data-i="'+i+'">'+
-    '<div class="n">'+esc(s.n)+'</div>'+
+  var fv=isFav(s.u);
+  var t=(fv?'取消收藏':'收进收藏');
+  /* 卡片本身是 div 而不是 button：才能在里面放星标按钮（button 不能嵌套 button） */
+  return '<div class="st'+(cur?' cur':'')+'" data-i="'+i+'" role="button" tabindex="0">'+
+    '<div class="r1"><div class="n">'+esc(s.n)+'</div>'+
+    '<button class="favb'+(fv?' on':'')+'" data-fav="'+esc(s.u)+'" title="'+t+'" '+
+    'aria-label="'+t+'">'+(fv?'★':'☆')+'</button></div>'+
     '<div class="m">'+lamp+'<span class="tagc">'+esc(s.c||'')+'</span>'+
-    (isFav(s.u)?'<span class="tagc" style="color:var(--warn)">★ 常听</span>':'')+
     (s.custom?'<span class="tagc">自建</span>':'')+
-    '</div></button>';
+    '</div></div>';
 }
 
 function viewRadio(){
   var a=allStations();
-  var cats=['全部'].concat(CATS);
+  var cats=['全部','收藏'].concat(CATS);
   // 自建台单独成类
   var hasCustom=S.custom.length>0;
   if(hasCustom) cats.push('自建');
@@ -1870,6 +1927,14 @@ function viewRadio(){
     var pvSel=(cur==='地方台')? (S.lastProv||'全国') : '全国';
     list=a.filter(function(x){ return inCat(x,cur) && inProv(x,pvSel); });
   }
+  if(cur==='收藏'){
+    /* 收藏按「最近收的排前面」走，不看台单顺序 */
+    list=[];
+    for(var fi=S.fav.length-1;fi>=0;fi--){
+      var fst=byUrl(S.fav[fi]);
+      if(fst) list.push(fst);
+    }
+  }
   var kw=(Q||'').trim().toLowerCase();
   if(kw){
     list=list.filter(function(x){
@@ -1879,27 +1944,30 @@ function viewRadio(){
        '“'+esc(Q)+'” 找到 <b>'+list.length+'</b> 个台</p></div>';
   }
   if(!list.length){
-    h+='<div class="card"><p>'+(kw? '没有这样的台，换个词试试。' : '这一类还没有台。')+'</p></div>';
+    h+='<div class="card"><p>'+(kw? '没有这样的台，换个词试试。'
+       : (cur==='收藏'
+          ? '还没收着一个台。点台卡片右上角的 <b>☆</b>，或者按下面播放条上的 <b>☆</b>，就收进来了。'
+          : '这一类还没有台。'))+'</p></div>';
   }else{
+    if(cur==='收藏'){
+      h+='<p class="hint" style="margin:0 0 9px">收了 '+list.length+
+         ' 个台，最近收的排在前头。点实心的 <b>★</b> 就移出去。</p>';
+    }
     h+='<div class="stgrid">';
     for(var j=0;j<list.length;j++){ h+=stCardHTML(list[j], a.indexOf(list[j])); }
     h+='</div>';
   }
 
-  // 常听
-  var favs=a.filter(function(x){ return isFav(x.u); });
-  if(favs.length){
-    h+='<div class="card" style="margin-top:14px"><h3>常听的台</h3><div class="stgrid">';
-    for(var k=0;k<favs.length;k++){ h+=stCardHTML(favs[k], a.indexOf(favs[k])); }
-    h+='</div></div>';
-  }
+  // 常听的台已收进上方「收藏」分类，不再重复成卡
   // 最近听过
   if(S.hist.length){
-    h+='<div class="card"><h3>最近听过</h3><div class="chips grid">';
+    h+='<div class="card"><div class="hd"><h3>最近听过</h3>'+
+       '<button class="chip" data-histclear="1">一键清零</button></div>'+
+       '<div class="chips grid" id="histChips">';
     for(var q=0;q<S.hist.length;q++){
       h+='<button class="chip" data-hist="'+esc(S.hist[q].u)+'">'+esc(S.hist[q].n)+'</button>';
     }
-    h+='</div></div>';
+    h+='</div><p class="hint" style="margin:9px 0 0">点台名直接接着听。清零只清这份记录，收藏不动。</p></div>';
   }
 
   h+='<div class="card"><h3>自己加一个台</h3>'+
@@ -1953,8 +2021,12 @@ function viewHelp(){
   '<li><b>换台</b>——底部左右两个旋钮，左边上一台，右边下一台；中间的圆钮是开关。</li>'+
   '<li><b>定时</b>——右上角 ⚙ 里可以设 15 分到 1.5 小时自动关机，睡着也不怕。</li>'+
   '</ol>'+
-  '<h3>把常听的台收起来</h3>'+
-  '<p>在「戏台」页点台卡片右上角的星标（长按卡片也可以），就会进「常听的台」，下次不用翻。</p>'+
+  '<h3>把喜欢的台收起来</h3>'+
+  '<p>两种手势都行：点台卡片右上角的 <b>☆</b>，或者按底部播放条上的 <b>☆</b>（收的正是正在听的那个台）。'+
+  '长按卡片也可以。收好之后，在「戏台」页顶上点 <b>收藏</b> 那一类，就只剩你收的台，找起来不用翻。</p>'+
+  '<h3>听过的记录</h3>'+
+  '<p>「戏台」页下面有一栏<b>最近听过</b>，点台名就接着听，最多留 12 条，只记在这台设备上。'+
+  '不想留就按那一栏右上角的<b>一键清零</b>，收藏不会跟着掉。</p>'+
   '<h3>放自己下载的戏</h3>'+
   '<p>「拾藏」页可以直接把音频文件、甚至整个文件夹拖进去。放进去之后关掉页面再打开还在，'+
   '听到一半退出去，下次接着听。</p>'+
@@ -1979,6 +2051,9 @@ function viewFaq(){
   ['声音断断续续、老缓冲？',
    '直播流对网络比较敏感。收音机嘛，信号弱的时候就是会飘。换个网络，或者挑「怀旧老歌」里码率低的台试试。'+
    '另外同时开着的其他视频、下载会抢带宽。'],
+  ['收藏和「最近听过」存在哪？会不会被别人看到？',
+   '都存在你这台设备的浏览器里（localStorage），<b>不会上传到任何服务器</b>，别人看不到。'+
+   '换设备、清缓存之后不会带过去——想搬就用「设置」里的导出备份。'],
   ['能听多久？会不会很费流量？',
    '这些台大多是 64 kbps，一小时约 28 MB。用手机流量听一下午大概几百 MB，建议连 WiFi。'],
   ['「拾藏」收进来的文件放在哪？会上传吗？',
@@ -2064,7 +2139,7 @@ function viewAbout(){
   '<h3>技术说明</h3>'+
   '<table>'+
   '<tr><th>项目</th><th>说明</th></tr>'+
-  '<tr><td>形态</td><td>单个 HTML 文件，约 472 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装</td></tr>'+
+  '<tr><td>形态</td><td>单个 HTML 文件，约 477 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装</td></tr>'+
   '<tr><td>播放</td><td>浏览器原生 Audio + 内嵌 hls.js（安卓 Chrome 也能播 HLS）；MP3 与 m3u8 直播流</td></tr>'+
   '<tr><td>内置台</td><td>'+STATIONS.length+' 个电台，按央广 / 国广 / 地方台（再分 31 省） / 交通台 / 新闻综合 / 教育台 / 戏曲 / 说书 / 文艺 / 音乐 / 怀旧老歌 / 网络台 / 电视伴音分类，全部逐台试播验证</td></tr>'+
   '<tr><td>本地库</td><td>IndexedDB 存储，元数据与二进制分开存放，支持断点续播</td></tr>'+
@@ -2240,6 +2315,18 @@ document.addEventListener('click', function(e){
   el=closestAttr(e.target,'data-v');
   if(el){ VIEW=el.getAttribute('data-v'); window.scrollTo(0,0); render(); return; }
 
+  // 卡片上的星标（要排在「选台」前面，否则会被当成点卡片）
+  el=closestAttr(e.target,'data-fav');
+  if(el){ toggleFav(el.getAttribute('data-fav')); return; }
+
+  // 听过的一键清零
+  el=closestAttr(e.target,'data-histclear');
+  if(el){
+    if(!window.confirm('听过的记录会全部清掉，收藏和自建台不受影响。确定？')) return;
+    S.hist=[]; save(); render(); toast('听过的记录已清零');
+    return;
+  }
+
   // 选台
   el=closestAttr(e.target,'data-i');
   if(el && el.classList && el.classList.contains('st')){
@@ -2313,9 +2400,21 @@ document.addEventListener('click', function(e){
   }
 });
 
+/* 卡片是 div，补键盘操作：回车 / 空格开声 */
+document.addEventListener('keydown', function(e){
+  if(e.key!=='Enter' && e.key!==' ' && e.key!=='Spacebar') return;
+  if(closestAttr(e.target,'data-fav')) return;    // 焦点在星标上，交给星标自己处理
+  var el=closestAttr(e.target,'data-i');
+  if(el && el.classList && el.classList.contains('st')){
+    e.preventDefault();
+    el.click();
+  }
+});
+
 /* 长按 / 双击收藏 */
 var pressTimer=null;
 document.addEventListener('pointerdown', function(e){
+  if(closestAttr(e.target,'data-fav')) return;   // 星标上的长按不算收藏手势
   var el=closestAttr(e.target,'data-i');
   if(el && el.classList && el.classList.contains('st')){
     var a=allStations(), st=a[parseInt(el.getAttribute('data-i'),10)];
@@ -2334,13 +2433,21 @@ document.addEventListener('pointerdown', function(e){
 
 function toggleFav(u){
   var i=S.fav.indexOf(u);
-  if(i>=0){ S.fav.splice(i,1); toast('从常听里拿出去了'); }
-  else{ S.fav.push(u); toast('收进「常听的台」了'); }
-  save(); render();
+  if(i>=0){
+    S.fav.splice(i,1);
+    toast('已从收藏里移出');
+  }else{
+    S.fav.push(u);
+    toast(S.fav.length===1? '收进收藏了，在「收藏」那一类里' : '收进收藏了');
+  }
+  save(); render(); syncFavBtn();
 }
 
 /* 播放条 */
 $('btnPlay').addEventListener('click', togglePlay);
+$('btnFav').addEventListener('click', function(){
+  if(P.url && P.url.indexOf('local:')!==0) toggleFav(P.url);
+});
 $('knobPrev').addEventListener('click', prevStation);
 $('knobNext').addEventListener('click', nextStation);
 $('btnVolUp').addEventListener('click', function(){ setVol(S.vol+0.1); });

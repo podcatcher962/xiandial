@@ -25,16 +25,18 @@
 | **锁屏控制** | 手机上锁屏 / 通知栏显示台名，支持耳机线控切台 |
 | **拾藏** | 把自己下载的戏、评书、相声收进来（支持整文件夹、可拖放），存在本机 IndexedDB，断网照听、听到哪记到哪 |
 | **匣子外观** | 木纹外壳 + 扬声器网罩 + 调频窗，指针随台移动、放送时电平表跳动 |
-| **换台** | 左右旋钮换台，中间圆钮开关；长按卡片收藏 |
+| **收藏** | 喜欢的台点卡片右上角的 **☆**（或底部播放条上的 **☆**，收的正是正在听的那个）就收进来；顶上「**收藏**」那一类里，收过的台一按就到。播放条星标随时能收、能取消 |
+| **最近听过** | 自动记下听过的台（最多 12 条，只存本机），点台名接着听；不想要了按「一键清零」，收藏不受影响 |
+| **换台** | 左右旋钮换台，中间圆钮开关；长按卡片也能收藏 |
 | **定时关机** | 15 分 / 30 分 / 1 小时 / 1.5 小时 —— 听着睡着也不怕 |
-| **其他** | 自建台、深浅色、四档字号、大触控模式、减弱动效、设置导出导入、历史记录 |
+| **其他** | 自建台、深浅色、四档字号、大触控模式、减弱动效、设置导出导入 |
 
 ### 怎么用
 
 1. 点「戏台」里任意一个台就开始放。
 2. 想听自己存的戏 → 进「拾藏」，把音频文件或整个文件夹拖进去。
-3. 常听的台长按卡片收藏，下次不用翻。
-4. 换台用左右旋钮，或直接点卡片。
+3. 喜欢的台，点卡片右上角的星标收好；在「戏台」页点顶上「收藏」那一类，收过的台一按就到。
+4. 换台用左右旋钮，或直接点卡片；「最近听过」那一栏点台名就能接着听。
 
 ### 已知限制
 
@@ -55,7 +57,7 @@
 
 | 项目 | 说明 |
 |---|---|
-| 形态 | 单个 HTML 文件，约 472 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
+| 形态 | 单个 HTML 文件，约 477 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
 | 播放 | 浏览器原生 `Audio` + 内嵌 hls.js；MP3 直播流与 HLS（m3u8）切片流 |
 | 本地库 | IndexedDB，元数据与二进制分库存放，支持断点续播 |
 | 设置 | localStorage 保存，可导出 / 导入 JSON 备份 |
@@ -86,16 +88,18 @@ Works in mobile browsers too — you can "Add to Home Screen" and use it like an
 | **Stations** | **909 stations**, grouped by CNR / CRI / local stations (further split into 31 provinces, incl. many prefecture cities) / traffic / news & general / education / opera / storytelling / arts / music / oldies / online-only / TV audio. Picking "local" reveals a second row of 31 province chips — and plenty of prefecture-city stations (Suzhou, Ningbo, Tangshan, Xuzhou …) behind them. **Every station was individually playback-tested in a real browser** |
 | **Library** | Import your own downloaded opera / storytelling audio files (whole folders supported, drag-and-drop). Stored locally in IndexedDB — works offline, resumes where you left off |
 | **Radio shell** | Wood-grain cabinet, speaker grille and a tuning window whose needle follows the station; a VU meter pulses during playback |
-| **Tuning** | Turn the left/right knobs to change station, the centre knob to toggle play; long-press a card to bookmark |
+| **Favourites** | Tap the **☆** on a card — or the **☆** on the player bar, which bookmarks exactly what you are listening to — and the station lands in a dedicated "**Favourites**" category at the top of the list. The player-bar star toggles it on and off at any time |
+| **Recently played** | The app keeps the last 12 stations you listened to (locally only); tap a name to resume, or hit "clear" to wipe the list — favourites are untouched |
+| **Tuning** | Turn the left/right knobs to change station, the centre knob to toggle play; long-press a card to bookmark too |
 | **Sleep timer** | 15 min / 30 min / 1 h / 1.5 h — safe to fall asleep to |
-| **Extras** | Add your own stations, light/dark themes, four font sizes, large-touch mode, reduced motion, settings export/import, listening history |
+| **Extras** | Add your own stations, light/dark themes, four font sizes, large-touch mode, reduced motion, settings export/import |
 
 ### How to use
 
 1. Tap any station on the **Stations** page to start playing.
 2. For your own files, open **Library** and drag in audio files or a whole folder.
-3. Long-press a card to bookmark a favourite station.
-4. Use the side knobs to tune, or tap cards directly.
+3. Tap the star on a card to bookmark a favourite; the "Favourites" category at the top gathers them all.
+4. Use the side knobs to tune, or tap cards directly; the "Recently played" row resumes in one tap.
 
 ### Known limitations
 
@@ -115,7 +119,7 @@ Works in mobile browsers too — you can "Add to Home Screen" and use it like an
 
 | Item | Detail |
 |---|---|
-| Form | A single HTML file, ~472 KB (with the embedded hls.js engine), no dependencies, no CDN, no install |
+| Form | A single HTML file, ~477 KB (with the embedded hls.js engine), no dependencies, no CDN, no install |
 | Playback | Native browser `Audio` + embedded hls.js; MP3 live streams and HLS (m3u8) segments |
 | Local library | IndexedDB, metadata and binary stored separately, resume supported |
 | Settings | Saved in localStorage, exportable / importable as JSON |
