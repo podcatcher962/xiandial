@@ -1498,6 +1498,8 @@ function fmtSize(b){
   if(b<1073741824) return (b/1048576).toFixed(1)+' MB';
   return (b/1073741824).toFixed(2)+' GB';
 }
+/* 文件名里不能出现的字符，替换成下划线，免得下载时被系统拦下 */
+function safeFn(s){ return String(s||'audio').replace(/[\\/:*?"<>|]/g,'_').slice(0,120); }
 function fmtTime(s){
   if(!isFinite(s)||s<0) return '0:00';
   s=Math.floor(s);
@@ -1915,7 +1917,7 @@ function setVol(v){
       音质就是电台原样，产物是 .mp3 / .aac，哪儿都能放，也最省电。
       前提是这条流允许跨域（服务端给得出 Access-Control-Allow-Origin）。
 
-   ②「采音重编」——从播放器上把声音采下来，转成 opus（.webm）。
+   ②「采音重编」——从播放器上把声音采下来，转成 opus（.webm，64 kbps）。
       给 HLS（m3u8）那种拉分片的台用，也当①走不通时的兜底。
       实测：采到的声音与扬声器音量无关，所以定时关机的音量渐弱
       不会把录音也一起淡掉。
@@ -2064,7 +2066,7 @@ function recCap(reloaded){
   var mt='audio/webm;codecs=opus';
   try{ if(!MediaRecorder.isTypeSupported(mt)) mt=''; }catch(e){ mt=''; }
   try{
-    REC.mr = mt ? new MediaRecorder(ms,{mimeType:mt, audioBitsPerSecond:96000})
+    REC.mr = mt ? new MediaRecorder(ms,{mimeType:mt, audioBitsPerSecond:64000})
                 : new MediaRecorder(ms);
   }catch(e){
     recFail('这个浏览器不支持录音');
@@ -2503,7 +2505,8 @@ function viewLocal(){
   h+='<h2>拾藏</h2>';
   h+='<p class="hint">把自己下载好的戏、评书、相声收进来，就能离线听，关掉页面下次还在，听到哪记到哪。'+
      '听电台时按底栏的 <b>⏺</b> 录下来的段落也会落到这里，标着<b>录音</b>，随时回听。'+
-     '音频全部留在这台设备上，<b>不会上传到任何服务器</b>。</p>';
+     '音频全部留在这台设备上，<b>不会上传到任何服务器</b>，'+
+     '在系统里翻不到独立文件；想留档或搬走，点那一条的<b>存文件</b>就能存成普通音频。</p>';
   h+='<div class="drop" id="drop">'+
        '<div style="font-size:28px">＋</div>'+
        '<div>把音频文件拖到这里，或点下面按钮选文件</div>'+
@@ -2553,6 +2556,12 @@ function viewHelp(){
   '到点它自己停好存上。想<b>听着睡着、醒来再回听</b>——把「定时关机」和「录音时长」'+
   '都设上，录音时长选<b>跟着关机停</b>：到点关机时录音也一起停，那段就留在「拾藏」里等你。</p>'+
   '<p>录音不会变声、不会被音量旋钮影响，你把音量调到多小，录进去的还是原样那一段。</p>'+
+  '<p>它自己挑最省的做法：地址本身是 <code>.mp3</code> 就<b>原样收下</b>，产物还是 <code>.mp3</code>，'+
+  '音质与电台一致、体积最小；是 HLS 分片台就<b>采音重编</b>成 <code>.webm</code>'+
+  '（opus <b>64 kbps</b>，跟大多数电台的直播码率相当，<b>一小时约 28 MB</b>）。</p>'+
+  '<p>录的东西<b>只在这台设备里</b>，不会上传。它存在浏览器的本地数据库里，'+
+  '在系统里搜不到一个独立文件——想留成普通文件，去「拾藏」点那一条的<b>存文件</b>，'+
+  '它会落到你的下载目录里。</p>'+
   '<h3>听过的记录</h3>'+
   '<p>「戏台」页下面有一栏<b>最近听过</b>，点台名就接着听，最多留 12 条，只记在这台设备上。'+
   '不想留就按那一栏右上角的<b>一键清零</b>，收藏不会跟着掉。</p>'+
@@ -2593,7 +2602,9 @@ function viewFaq(){
   ['能听多久？会不会很费流量？',
    '这些台大多是 64 kbps，一小时约 28 MB。用手机流量听一下午大概几百 MB，建议连 WiFi。'],
   ['「拾藏」收进来的文件放在哪？会上传吗？',
-   '全部存在你这台设备的浏览器本地数据库里，<b>不会上传到任何服务器</b>，也不经过网络。'+
+   '全部存在你这台设备的浏览器本地数据库里（库名 <code>xixiazi.media</code>，落在浏览器自己的数据目录，'+
+   '不是一个能直接双击的音频文件），<b>不会上传到任何服务器</b>，也不经过网络。'+
+   '想把录音变成普通文件留着，在「拾藏」里点那一条的<b>存文件</b>，就会落到你的下载目录。'+
    '正因如此，换设备或清缓存之后就不会同步过去。'],
   ['为什么倒掉「拾藏」里一条，手机存储没马上变少？',
    '浏览器回收空间有时会延迟，通常过一会儿或重启浏览器就好了。'],
@@ -2601,7 +2612,8 @@ function viewFaq(){
    '不能自动同步——这是单文件工具，没有服务器。把 HTML 文件分别拷到两台设备就各用各的；'+
    '设置可以用「导出备份 / 恢复备份」手动搬。'],
   ['为什么没有下载功能？',
-   '不做。市面上已有成熟的播客 / 戏曲下载工具，各司其职；它只管「听」，做一件事做干净。'],
+   '不做「按专辑整档扒下来」那种批量下载——市面上已有成熟的播客 / 戏曲下载工具，各司其职。'+
+   '它只管「听」，顺手把正在听的这一段录下来；录下的东西在「拾藏」里能「存文件」导出成普通音频。'],
   ['为什么没有音量记忆之外的均衡器、倍速？',
    '戏曲、评书这类内容倍速听会走味儿；家里人用的东西，按钮越少越好。'],
   ['想换个名字 / 换个外观？',
@@ -2714,6 +2726,7 @@ function refreshLocal(){
            (m.pos>3?(' · 上次听到 '+esc(fmtTime(m.pos))):'')+
            (m.g?(' · '+esc(m.g)):'')+'</div></div>'+
          '<button class="btn ghost" data-lp="'+esc(m.id)+'">'+(cur&&P.state==='playing'?'暂停':'收听')+'</button>'+
+         '<button class="btn ghost" data-ls="'+esc(m.id)+'" title="存成普通文件，落到下载目录">存文件</button>'+
          '<button class="btn ghost" data-ld="'+esc(m.id)+'" title="倒掉">倒掉</button>'+
          '</div>';
     }
@@ -2928,6 +2941,27 @@ document.addEventListener('click', function(e){
     var rec=null;
     for(var m=0;m<LOCALS.length;m++){ if(LOCALS[m].id===lp){ rec=LOCALS[m]; break; } }
     if(rec) localPlay(rec); else toast('读不到这一条');
+    return;
+  }
+  el=closestAttr(e.target,'data-ls');
+  if(el){
+    var sf=el.getAttribute('data-ls'), srec=null;
+    for(var q=0;q<LOCALS.length;q++){ if(LOCALS[q].id===sf){ srec=LOCALS[q]; break; } }
+    if(!srec){ toast('读不到这一条'); return; }
+    el.disabled=true;
+    localBlob(sf).then(function(b){
+      el.disabled=false;
+      if(!b){ toast('这个文件读不出来了'); return; }
+      var u=URL.createObjectURL(b);
+      var a2=document.createElement('a');
+      a2.href=u; a2.download=safeFn(srec.n);
+      document.body.appendChild(a2); a2.click();
+      setTimeout(function(){
+        if(a2.parentNode) a2.parentNode.removeChild(a2);
+        URL.revokeObjectURL(u);
+      }, 2000);
+      toast('已存成文件，去下载目录拿');
+    }).catch(function(){ el.disabled=false; toast('存不出来，可能这台设备空间不够'); });
     return;
   }
   el=closestAttr(e.target,'data-ld');
