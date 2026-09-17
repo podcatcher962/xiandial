@@ -284,6 +284,14 @@ p{margin:7px 0;color:var(--tx2)}
   font-size:calc(11.5px * var(--ui));color:var(--warn);border:1px dashed var(--warn);
   border-radius:7px;padding:4px 8px;white-space:nowrap;
 }
+/* 录音 */
+.favk.rec{color:#fff;background:var(--dan);border-color:var(--dan);animation:recblink 1.5s ease-in-out infinite}
+@keyframes recblink{0%,100%{opacity:1}50%{opacity:.42}}
+#recBadge{
+  font-size:calc(11.5px * var(--ui));color:#fff;background:var(--dan);
+  border-radius:7px;padding:4px 9px;white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+@media(prefers-reduced-motion:reduce){.favk.rec{animation:none}}
 
 /* ---------- 弹出面板 ---------- */
 .mask{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:none}
@@ -397,6 +405,8 @@ th{background:var(--card2);color:var(--tx)}
       <div class="s" id="nowS">点上面任意一个戏台，就能开声了</div>
     </div>
     <button class="favk" id="btnFav" title="收藏这个台" aria-label="收藏这个台" style="display:none">☆</button>
+    <button class="favk" id="btnRec" title="把正在听的录下来" aria-label="录音" style="display:none">⏺</button>
+    <span id="recBadge" style="display:none"></span>
     <span id="sleepBadge" style="display:none"></span>
     <div class="volbox">
       <button class="chip" id="btnVolDown" aria-label="音量减小">−</button>
@@ -443,6 +453,15 @@ th{background:var(--card2);color:var(--tx)}
     <button data-sl="-1">播完就停</button>
   </div>
   <p class="hint" style="margin:-4px 0 4px">到点前 20 秒会把音量慢慢收下去，不会被突然掐断。选「播完就停」只对「拾藏」里自己存的戏有效。</p>
+  <label class="f">录音时长</label>
+  <div class="seg" id="segRec">
+    <button data-rc="0">不定时</button>
+    <button data-rc="15">15 分</button>
+    <button data-rc="30">30 分</button>
+    <button data-rc="60">1 小时</button>
+    <button data-rc="-1">跟着关机停</button>
+  </div>
+  <p class="hint" style="margin:-4px 0 4px">听的时候按底栏的 <b>⏺</b> 就开始录，录完自动收进「拾藏 · 录音」，随时能回听。选「跟着关机停」——定时关机一到，录音也跟着停好存上，睡着听的那段不会丢。</p>
   <label class="f">打开后自动续播上次的台</label>
   <div class="seg" id="segResume">
     <button data-rs="1">开</button>
@@ -1430,7 +1449,7 @@ function inProv(x,p){
 var KEY='xixiazi.v1';                   // 键名固定，别改，改了老用户数据会丢
 var S={
   theme:'dark', ui:1, tap:38, motion:'full',
-  vol:0.7, sleepMin:0, resume:1, skip:1,
+  vol:0.7, sleepMin:0, resume:1, skip:1, recMin:0,
   cur:null, fav:[], custom:[], hist:[], lastCat:'全部', lastProv:'全国'
 };
 
@@ -1600,6 +1619,7 @@ function setNow(){
   $('tunerName').textContent=P.name||'待开机';
   $('btnPlay').textContent=(P.state==='playing')?'❚❚':'▶';
   syncFavBtn();
+  syncRecBtn();
   document.body.classList.toggle('playing', P.state==='playing');
   setMediaSession();
 }
@@ -1637,6 +1657,15 @@ function syncFavBtn(){
   fb.textContent=on?'★':'☆';
   fb.classList.toggle('on', on);
   fb.title=on?'取消收藏':'收进收藏';
+}
+/* 录音按钮：有正在播的台才露出来（「拾藏」里的音频不用再录） */
+function syncRecBtn(){
+  var rb=$('btnRec');
+  if(!rb) return;
+  rb.style.display=P.url?'flex':'none';
+  rb.classList.toggle('rec', REC.on);
+  rb.textContent=REC.on?'■':'⏺';
+  rb.title=REC.on?'停止录音并保存':'把正在听的录下来';
 }
 
 function setNeedle(){
@@ -1677,6 +1706,7 @@ function stopAudio(){
 function playStation(st, opts){
   opts=opts||{};
   if(!st) return;
+  if(REC.on && P.url && P.url!==st.u) recStopIfPlaying();   // 换台了，把刚才那段先收好
   if(P.retryTimer){ clearTimeout(P.retryTimer); P.retryTimer=null; }
   if(isHls(st.u) && !HLS_NATIVE && typeof Hls==='undefined'){
     toast('这个台是 HLS 流，当前浏览器播不了。请换一个台，或用 Edge / Safari 打开。', 4200);
@@ -1847,6 +1877,7 @@ function setSleep(min){
     var left=sleepEnd-Date.now();
     if(left<=0){
       clearInterval(sleepTimer); sleepTimer=null;
+      recAutoStop();                       // 录音先收好，别让睡着听的那段丢了
       stopAudio();
       P.state='idle'; P.url=null; setNow(); render();
       $('sleepBadge').style.display='none'; S.sleepMin=0; save();
@@ -1873,6 +1904,271 @@ function setVol(v){
   var rot=-118+S.vol*236;                 // 两个旋钮同步指示音量
   $('knobPrev').style.setProperty('--rot', rot+'deg');
   $('knobNext').style.setProperty('--rot', rot+'deg');
+}
+
+/* ══════════════════════════════════════════════════════
+   四·五、录音：把正在听的这一段存下来
+   ──────────────────────────────────────────────────────
+   两条路，自动挑：
+
+   ①「原流直录」——直接去 fetch 电台的流，收原始字节。
+      音质就是电台原样，产物是 .mp3 / .aac，哪儿都能放，也最省电。
+      前提是这条流允许跨域（服务端给得出 Access-Control-Allow-Origin）。
+
+   ②「采音重编」——从播放器上把声音采下来，转成 opus（.webm）。
+      给 HLS（m3u8）那种拉分片的台用，也当①走不通时的兜底。
+      实测：采到的声音与扬声器音量无关，所以定时关机的音量渐弱
+      不会把录音也一起淡掉。
+
+   两条都不通就明说这个台录不了，不假装录上。
+   ══════════════════════════════════════════════════════ */
+var REC={on:false, t0:0, timer:null, engine:'', mr:null, chunks:[], aborter:null,
+         bytes:0, name:'', plan:0, started:false, wantSave:false, done:false, endMs:0,
+         parts:null, rawTotal:0};
+
+function recElapsed(){ return REC.on ? (Date.now()-REC.t0) : (REC.endMs||0); }
+function recClock(ms){
+  var s=Math.floor(ms/1000), m=Math.floor(s/60), h=Math.floor(m/60);
+  if(h) return h+':'+(m%60<10?'0':'')+(m%60)+':'+(s%60<10?'0':'')+(s%60);
+  return m+':'+(s%60<10?'0':'')+(s%60);
+}
+function recPaint(){
+  var b=$('recBadge');
+  if(b){
+    if(REC.on){
+      b.style.display='';
+      b.textContent='● '+recClock(recElapsed())+(REC.bytes?(' · '+fmtSize(REC.bytes)):'');
+    }else{
+      b.style.display='none';
+    }
+  }
+  syncRecBtn();
+}
+function recTickStart(){
+  if(REC.timer) clearInterval(REC.timer);
+  REC.timer=setInterval(function(){
+    if(!REC.on){ clearInterval(REC.timer); REC.timer=null; return; }
+    recPaint();
+    if(REC.plan && recElapsed()>=REC.plan) recStop(true, '到点了');
+  }, 1000);
+}
+
+/* 这一次要录多久（毫秒）。0 = 不定时，一直录到手动停 */
+function recPlanMs(){
+  var m=S.recMin;
+  if(m===-1){
+    /* 跟着定时关机停：按关机剩余时间走 */
+    if(sleepEnd && sleepEnd>Date.now()) return sleepEnd-Date.now();
+    return 0;
+  }
+  if(m>0) return m*60000;
+  return 0;
+}
+
+function recStart(){
+  if(REC.on) return;
+  if(!P.url || P.url.indexOf('local:')===0){
+    toast('先选一个台，在放的时候才能录'); return;
+  }
+  REC.name=P.name||'广播'; REC.on=true; REC.t0=Date.now(); REC.bytes=0;
+  REC.chunks=[]; REC.mr=null; REC.aborter=null; REC.started=false;
+  REC.wantSave=false; REC.done=false; REC.endMs=0; REC.reloading=false;
+  REC.plan=recPlanMs();
+  recTickStart(); recPaint();
+  if(isHls(P.url)) recCapture();
+  else recRaw(P.url);
+}
+
+/* ① 原流直录
+   注意：停止时**不能**只靠 abort 让 read() 抛错来收尾 —— 实测（Edge 151）
+   abort 之后已挂起的 read() 不会 reject，回调永远不触发，录音就丢在半空。
+   所以停止时在 recStop 里直接拿已收到的字节落盘，abort 只用来断开下载。 */
+function recRaw(url){
+  var ctl=null;
+  try{ ctl=new AbortController(); }catch(e){ ctl=null; }
+  REC.aborter=ctl;
+  REC.engine='raw';
+  REC.parts=[]; REC.rawTotal=0; REC.ct='';
+  var closed=false;
+  var opts={mode:'cors'};
+  if(ctl) opts.signal=ctl.signal;
+  fetch(url, opts).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    var ct=(r.headers.get('content-type')||'').toLowerCase();
+    REC.ct=ct;
+    var rd=r.body.getReader();
+    (function pump(){
+      return rd.read().then(function(v){
+        if(closed || REC.done) return;
+        if(v.done){ closed=true; recRawDone(REC.parts, REC.rawTotal, ct); return; }
+        REC.parts.push(v.value); REC.rawTotal+=v.value.length; REC.bytes=REC.rawTotal;
+        if(REC.plan && recElapsed()>=REC.plan){ closed=true; recRawDone(REC.parts, REC.rawTotal, ct); return; }
+        return pump();
+      });
+    })();
+  }).catch(function(e){
+    if(closed || REC.done) return;
+    closed=true;
+    /* 已经收到东西了（多半是流断了）→ 存下来
+       一点都没收到 → 这条流不让直录，换采音 */
+    if(REC.wantSave || REC.rawTotal>20000) recRawDone(REC.parts, REC.rawTotal, REC.ct||'');
+    else if(REC.on){ REC.engine='cap'; recCap(false); }
+    else toast('这个台录不了——它不答应从别的页面取流', 3600);
+  });
+}
+function recRawDone(parts, total, ct){
+  if(REC.done) return;                    // 只落一次盘
+  REC.done=true;
+  recWrapUp();
+  if(total<8000){
+    toast('这次没录到东西——这个台可能不让录', 3600);
+    return;
+  }
+  ct=ct||'';
+  var mime='audio/mpeg', ext='.mp3';
+  if(ct.indexOf('aac')>=0){ mime='audio/aac'; ext='.aac'; }
+  else if(ct.indexOf('ogg')>=0){ mime='audio/ogg'; ext='.ogg'; }
+  else if(ct.indexOf('mp4')>=0 || ct.indexOf('m4a')>=0){ mime='audio/mp4'; ext='.m4a'; }
+  recFinish(new Blob(parts, {type:mime}), ext, mime);
+}
+/* 把「正在录」的状态收干净（时间、定时器、按钮、徽标） */
+function recWrapUp(){
+  if(REC.timer){ clearInterval(REC.timer); REC.timer=null; }
+  if(REC.on){ REC.endMs=recElapsed(); }
+  REC.on=false;
+  var bd=$('recBadge'); if(bd) bd.style.display='none';
+  var btn=$('btnRec');
+  if(btn){ btn.classList.remove('rec'); btn.textContent='⏺'; }
+}
+
+/* ② 采音重编 */
+function recCapture(){ recCap(false); }
+function recCap(reloaded){
+  REC.engine='cap';
+  var ms=null, why='';
+  try{
+    if(typeof audio.captureStream!=='function') why='这个浏览器不给采音';
+    else ms=audio.captureStream();
+  }catch(e){ why='它的声音来自别的站点，浏览器不让采'; }
+  if(!ms && !why) why='它的声音来自别的站点，浏览器不让采';
+  if(!ms || !ms.getAudioTracks().length){
+    /* Edge 走的是原生 HLS，元素被判成「跨域数据」采不了。
+       换成 hls.js 接线（MSE 的 blob: 是同源的），就能采了。 */
+    if(!reloaded && isHls(P.url) && typeof Hls!=='undefined' && Hls.isSupported()){
+      recReloadViaHls();
+      return;
+    }
+    recFail('这个台录不了——'+(why||'采不到声音'));
+    return;
+  }
+  var mt='audio/webm;codecs=opus';
+  try{ if(!MediaRecorder.isTypeSupported(mt)) mt=''; }catch(e){ mt=''; }
+  try{
+    REC.mr = mt ? new MediaRecorder(ms,{mimeType:mt, audioBitsPerSecond:96000})
+                : new MediaRecorder(ms);
+  }catch(e){
+    recFail('这个浏览器不支持录音');
+    return;
+  }
+  REC.chunks=[];
+  REC.mr.ondataavailable=function(e){
+    if(e.data && e.data.size){ REC.chunks.push(e.data); REC.bytes+=e.data.size; }
+  };
+  REC.mr.onstop=function(){
+    /* 不是用户按停（比如流断了）也要收好 */
+    if(REC.on){ REC.wantSave=true; REC.endMs=recElapsed(); recWrapUp(); }
+    var blob=new Blob(REC.chunks, {type:'audio/webm'});
+    recFinish(blob, '.webm', 'audio/webm');
+  };
+  REC.mr.onerror=function(){ recFail('录音中途出错了'); };
+  try{ REC.mr.start(1000); }catch(e){ recFail('录音起不来'); return; }
+  REC.started=true;
+  recPaint();
+}
+/* 为了能录，把 HLS 换成 hls.js 接线（会有一两秒的接缝） */
+function recReloadViaHls(){
+  var u=P.url;
+  REC.reloading=true;
+  if($('nowS')) $('nowS').textContent='为了能录，正在换一种接线方式……';
+  stopAudio();
+  var ok=hlsStart(u, function(){
+    REC.reloading=false;
+    recFail('这个台录不了——它不答应从别的页面取流');
+  });
+  if(!ok){ REC.reloading=false; recFail('这个台录不了'); return; }
+  audio.volume=S.vol;
+  audio.play().catch(function(){});
+  var t0=Date.now();
+  (function wait(){
+    if(!REC.on){ REC.reloading=false; return; }
+    if(audio.readyState>=2){ REC.reloading=false; P.state='playing'; setNow(); recCap(true); return; }
+    if(Date.now()-t0>6000){ REC.reloading=false; recFail('这个台录不了——没能重新接上'); return; }
+    setTimeout(wait, 400);
+  })();
+}
+
+/* 停止（save=true 表示存下来） */
+function recStop(save, why){
+  if(!REC.on) return;
+  REC.wantSave=!!save;
+  REC.endMs=recElapsed();
+  var eng=REC.engine;
+  recWrapUp();
+  if(REC.mr && REC.mr.state!=='inactive'){
+    try{ REC.mr.stop(); }catch(e){}
+  }
+  /* 直录：直接拿已经收到的字节落盘（abort 不会触发回调，见 recRaw 注释） */
+  if(eng==='raw'){
+    recRawDone(REC.parts||[], REC.rawTotal||0, REC.ct||'');
+  }
+  if(REC.aborter){ try{ REC.aborter.abort(); }catch(e){} }
+  REC.aborter=null;
+}
+function recFail(msg){
+  var was=REC.on;
+  REC.wantSave=false; REC.done=true;
+  recWrapUp();
+  if(REC.aborter){ try{ REC.aborter.abort(); }catch(e){} }
+  if(REC.mr && REC.mr.state!=='inactive'){ try{ REC.mr.stop(); }catch(e){} }
+  REC.mr=null; REC.chunks=[]; REC.bytes=0; REC.started=false;
+  if(was) toast(msg, 3600);
+}
+
+/* 落盘：存进「拾藏 · 录音」 */
+function recFinish(blob, ext, mime){
+  var conn=(REC.engine==='cap');
+  REC.mr=null;
+  if(!REC.wantSave || !blob || blob.size<8000){
+    REC.chunks=[]; REC.bytes=0; REC.started=false;
+    if(conn && REC.wantSave) toast('这次没录到东西——这个台的声音可能采不下来', 3600);
+    return;
+  }
+  var ms=REC.endMs||recElapsed();
+  var mi=Math.max(1, Math.round(ms/60000));
+  var d=new Date(), p2=function(n){ return (n<10?'0':'')+n; };
+  var nm=REC.name+' · '+p2(d.getMonth()+1)+'-'+p2(d.getDate())+' '+
+         p2(d.getHours())+':'+p2(d.getMinutes())+'（录 '+mi+' 分）'+ext;
+  var f=blob;
+  try{ f=new File([blob], nm, {type:mime||'audio/webm'}); }
+  catch(e){ try{ blob.name=nm; }catch(e2){} }
+  REC.chunks=[]; REC.bytes=0; REC.started=false; REC.wantSave=false;
+  REC.parts=null; REC.rawTotal=0;
+  localAdd(f, '录音').then(function(){
+    if(VIEW==='local') refreshLocal();
+    toast('录好了：'+nm+'（'+fmtSize(blob.size)+'），已收进「拾藏 · 录音」', 4200);
+  }).catch(function(){
+    toast('录音存不进去了，可能是这台设备空间不够', 3600);
+  });
+}
+
+/* 定时关机到点：先把录音收好，再关机 */
+function recAutoStop(){
+  if(REC.on) recStop(true, '跟着关机停');
+}
+
+/* 换台 / 关机时顺手把录音收尾 */
+function recStopIfPlaying(){
+  if(REC.on) recStop(true, '换台了');
 }
 
 /* ══════════════════════════════════════════════════════
@@ -1963,6 +2259,7 @@ function localNext(){
 
 function localPlay(rec){
   if(!rec) return;
+  if(REC.on) recStopIfPlaying();          // 转去听本地戏了，先把录音收好
   localBlob(rec.id).then(function(blob){
     if(!blob){ toast('这个文件读不出来了，可能已损坏'); return; }
     if(LP.url) URL.revokeObjectURL(LP.url);
@@ -2205,6 +2502,7 @@ function viewLocal(){
   h+='<div class="card">';
   h+='<h2>拾藏</h2>';
   h+='<p class="hint">把自己下载好的戏、评书、相声收进来，就能离线听，关掉页面下次还在，听到哪记到哪。'+
+     '听电台时按底栏的 <b>⏺</b> 录下来的段落也会落到这里，标着<b>录音</b>，随时回听。'+
      '音频全部留在这台设备上，<b>不会上传到任何服务器</b>。</p>';
   h+='<div class="drop" id="drop">'+
        '<div style="font-size:28px">＋</div>'+
@@ -2247,6 +2545,14 @@ function viewHelp(){
   '<h3>信号断了会自己接回去</h3>'+
   '<p>听着听着没声了，不用重新点：它会先试着<b>原地接回去</b>（最多 4 次，间隔越来越长），'+
   '还是不行才跳到下一个台。底部会写着「正在接回去（第 几次）」。</p>'+
+  '<h3>把喜欢的录下来</h3>'+
+  '<p>正听得入神，又怕错过？按底栏那个 <b>⏺</b> 就开始录，按钮会变红闪，旁边显示录了多久、多大。'+
+  '再按一下就停，录下来的会自动收进「拾藏」，标着<b>录音</b>，点「收听」就能回放，'+
+  '跟别的音频一样能拖进度、能接着听。</p>'+
+  '<p>想让录音<b>录固定时长</b>，去「设置」里的「录音时长」选 15 分 / 30 分 / 1 小时，'+
+  '到点它自己停好存上。想<b>听着睡着、醒来再回听</b>——把「定时关机」和「录音时长」'+
+  '都设上，录音时长选<b>跟着关机停</b>：到点关机时录音也一起停，那段就留在「拾藏」里等你。</p>'+
+  '<p>录音不会变声、不会被音量旋钮影响，你把音量调到多小，录进去的还是原样那一段。</p>'+
   '<h3>听过的记录</h3>'+
   '<p>「戏台」页下面有一栏<b>最近听过</b>，点台名就接着听，最多留 12 条，只记在这台设备上。'+
   '不想留就按那一栏右上角的<b>一键清零</b>，收藏不会跟着掉。</p>'+
@@ -2369,7 +2675,7 @@ function viewAbout(){
   '<h3>技术说明</h3>'+
   '<table>'+
   '<tr><th>项目</th><th>说明</th></tr>'+
-  '<tr><td>形态</td><td>单个 HTML 文件，约 491 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装</td></tr>'+
+  '<tr><td>形态</td><td>单个 HTML 文件，约 505 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装</td></tr>'+
   '<tr><td>播放</td><td>浏览器原生 Audio + 内嵌 hls.js（安卓 Chrome 也能播 HLS）；MP3 与 m3u8 直播流</td></tr>'+
   '<tr><td>内置台</td><td>'+STATIONS.length+' 个电台，按央广 / 国广 / 地方台（再分 31 省） / 交通台 / 新闻综合 / 教育台 / 戏曲 / 说书 / 文艺 / 音乐 / 怀旧老歌 / 网络台 / 电视伴音分类，全部逐台试播验证</td></tr>'+
   '<tr><td>本地库</td><td>IndexedDB 存储，元数据与二进制分开存放，支持断点续播与顺序连播</td></tr>'+
@@ -2377,6 +2683,7 @@ function viewAbout(){
   '<tr><td>搜索</td><td>台名、省份、分类，以及拼音（全拼与首字母都认：henan / nbxw）</td></tr>'+
   '<tr><td>断线</td><td>信号断了先原地重连 4 次（间隔递增），仍不行才自动跳台</td></tr>'+
   '<tr><td>定时</td><td>15 分 / 30 分 / 1 小时 / 1.5 小时后关机，到点前 20 秒音量渐弱；也支持「播完一段就停」</td></tr>'+
+  '<tr><td>录音</td><td>边听边录：优先直收原流（.mp3，音质原样），不行则采音转 opus（.webm）；可定时长、可跟着定时关机一起停；录完自动进「拾藏 · 录音」，随时回听</td></tr>'+
   '<tr><td>设置</td><td>localStorage 保存，可导出 / 导入 JSON 备份</td></tr>'+
   '<tr><td>隐私</td><td>零采集、零上报、零第三方请求（仅播放时直连电台本身）</td></tr>'+
   '</table>'+
@@ -2474,6 +2781,7 @@ function applyAll(){
   syncSeg('segTap','data-tap',String(S.tap));
   syncSeg('segMotion','data-mo',S.motion);
   syncSeg('segSleep','data-sl',String(S.sleepMin));
+  syncSeg('segRec','data-rc',String(S.recMin||0));
   syncSeg('segResume','data-rs',String(S.resume));
   syncSeg('segSkip','data-sk',String(S.skip));
 }
@@ -2682,6 +2990,10 @@ $('btnPlay').addEventListener('click', togglePlay);
 $('btnFav').addEventListener('click', function(){
   if(P.url && P.url.indexOf('local:')!==0) toggleFav(P.url);
 });
+$('btnRec').addEventListener('click', function(){
+  if(REC.on) recStop(true);
+  else recStart();
+});
 $('knobPrev').addEventListener('click', prevStation);
 $('knobNext').addEventListener('click', nextStation);
 $('btnVolUp').addEventListener('click', function(){ setVol(S.vol+0.1); });
@@ -2701,6 +3013,12 @@ document.addEventListener('click', function(e){
     var sv=parseInt(sl,10);
     setSleep(sv); applyAll();
     toast(sv===0?'不定时了':(sv<0?'这一段放完就停':'到点自动关机：'+sv+' 分钟'));
+    return; }
+  var rc=t.getAttribute('data-rc'); if(rc){
+    S.recMin=parseInt(rc,10); save(); applyAll();
+    toast(S.recMin===0?'录音改成不定时，按一下停一下':
+          (S.recMin<0?'录音会跟着定时关机一起停':
+                      '录音一次录 '+S.recMin+' 分钟'));
     return; }
   var rs=t.getAttribute('data-rs'); if(rs){ S.resume=parseInt(rs,10); save(); applyAll(); return; }
   var sk=t.getAttribute('data-sk'); if(sk){ S.skip=parseInt(sk,10); save(); applyAll(); return; }

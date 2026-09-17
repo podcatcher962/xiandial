@@ -58,7 +58,7 @@
 
 | 项目 | 说明 |
 |---|---|
-| 形态 | 单个 HTML 文件，约 491 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
+| 形态 | 单个 HTML 文件，约 505 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
 | 播放 | 浏览器原生 `Audio` + 内嵌 hls.js；MP3 直播流与 HLS（m3u8）切片流 |
 | 本地库 | IndexedDB，元数据与二进制分库存放，支持断点续播 |
 | 设置 | localStorage 保存，可导出 / 导入 JSON 备份 |
@@ -123,7 +123,7 @@ Works in mobile browsers too — you can "Add to Home Screen" and use it like an
 
 | Item | Detail |
 |---|---|
-| Form | A single HTML file, ~491 KB (with the embedded hls.js engine), no dependencies, no CDN, no install |
+| Form | A single HTML file, ~505 KB (with the embedded hls.js engine), no dependencies, no CDN, no install |
 | Playback | Native browser `Audio` + embedded hls.js; MP3 live streams and HLS (m3u8) segments |
 | Local library | IndexedDB, metadata and binary stored separately, resume supported |
 | Settings | Saved in localStorage, exportable / importable as JSON |
