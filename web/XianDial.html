@@ -3137,11 +3137,17 @@ function doInstall(){
   if(isAppMode()){ toast('这一份就是电脑桌面版，不用装'); return; }
   if(installed()){ toast('已经装上了'); return; }
   if(IP){
-    IP.prompt();
-    IP.userChoice.then(function(r){
-      IP=null; syncInstall();
-      if(r && r.outcome==='accepted') toast('正在装，稍等桌面出现图标');
-    }, function(){ IP=null; syncInstall(); });
+    var ev=IP;
+    var done=function(){ IP=null; syncInstall(); };
+    var noBox=function(){ done(); toast('系统这次没弹安装框，可从浏览器菜单里找「安装应用 / 添加到主屏幕」', 5200); };
+    try{ var pr=ev.prompt(); if(pr && pr.catch) pr.catch(noBox); }
+    catch(e){ noBox(); return; }
+    if(ev.userChoice && ev.userChoice.then){
+      ev.userChoice.then(function(r){
+        done();
+        if(r && r.outcome==='accepted') toast('正在装，稍等桌面出现图标');
+      }, noBox);
+    } else done();
     return;
   }
   if(IS_IOS){ toast('Safari 底部点「分享」，再选「添加到主屏幕」', 5200); return; }
