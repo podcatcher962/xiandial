@@ -14,20 +14,23 @@
 
 **https://podcatcher962.github.io/xiandial/**
 
-手机浏览器打开也能用，可以「添加到主屏幕」当 App 点。
+手机打开后点「**设置 → 装到桌面**」：安卓与桌面 Chrome 一步装好，桌面出现图标，打开**没有地址栏**、断网也能开界面（收藏、自建台、拾藏都在本机，本来就不需要网）；iPhone / iPad 上跟着提示点「分享 → 添加到主屏幕」。电脑浏览器也能「安装为应用」，变成独立窗口。
 
 ### 功能
 
 | 模块 | 说明 |
 |---|---|
-| **戏台** | **1131 个电台**，按 央广 / 国广 / 地方台（再分 31 省，含大量地级市台）/ 交通台 / 新闻综合 / 教育台 / 戏曲 / 说书 / 文艺 / 音乐 / 怀旧老歌 / 网络台 / 电视伴音 分类。"地方台"选中后还能按下排 31 个省份再筛一层，省里再收着地级市台（苏州、宁波、唐山、徐州…）。**每一个都经真浏览器逐台试播验证** |
-| **搜索** | 台名、分类、**拼音**（首字母与全拼都认）三路一起搜 —— 打「hnt」出河南台、「pingshu」出评书台、「xianggang」出香港台，1131 个台里秒找「河南」「评书」「央视」 |
+| **戏台** | **1120 个电台**，按 央广 / 国广 / 地方台（再分 31 省，含大量地级市台）/ 交通台 / 新闻综合 / 教育台 / 戏曲 / 说书 / 文艺 / 音乐 / 怀旧老歌 / 网络台 / 电视伴音 分类。"地方台"选中后还能按下排 31 个省份再筛一层，省里再收着地级市台（苏州、宁波、唐山、徐州…）。**每一个都经真浏览器逐台试播验证** |
+| **搜索** | 台名、分类、**拼音**（首字母与全拼都认）三路一起搜 —— 打「hnt」出河南台、「pingshu」出评书台、「xianggang」出香港台，1120 个台里秒找「河南」「评书」「央视」 |
 | **锁屏控制** | 手机上锁屏 / 通知栏显示台名，支持耳机线控切台 |
 | **拾藏** | 把自己下载的戏、评书、相声收进来（支持整文件夹、可拖放），存在本机 IndexedDB，断网照听、听到哪记到哪 |
 | **边听边录** | 听到好的按底栏 **⏺** 就录下来 —— 按钮变红闪，旁边实时显示已录多久、多大。可设**固定时长**（15 / 30 / 60 分钟），也可选「**跟着定时关机停**」：听着睡着，醒来那段还在。录完自动进「拾藏」标着 `录音`，回听、删除都行；想留成普通文件，点那一条的 **存文件** 导到下载目录。录音全程不上传 |
 | **匣子外观** | 木纹外壳 + 扬声器网罩 + 调频窗，指针随台移动、放送时电平表跳动 |
 | **收藏** | 喜欢的台点卡片右上角的 **☆**（或底部播放条上的 **☆**，收的正是正在听的那个）就收进来；顶上「**收藏**」那一类里，收过的台一按就到。播放条星标随时能收、能取消 |
 | **最近听过** | 自动记下听过的台（最多 12 条，只存本机），点台名接着听；不想要了按「一键清零」，收藏不受影响 |
+| **装到桌面** | 「设置」里点一下就装成 App：安卓 / 桌面 Chrome 一键装，iPhone 按提示加主屏。装完没有地址栏、断网也能打开界面 |
+| **每个台各自的音量** | 各台录得响轻不一，新闻台常比音乐台响一截。开着的话，你给某个台调过的音量会**单独记住**，下次切回来自动用上次那个值；关掉就所有台共用一个音量 |
+| **收藏能带走** | 除「导出备份」成文件外，还能「**复制备份**」把收藏、自建台和所有设置压成**一段文字**，粘进微信收藏或备忘录；换设备时「**粘贴恢复**」贴回来就行 —— 手机上没文件管理器时最省事 |
 | **换台** | 左右旋钮换台，中间圆钮开关；长按卡片也能收藏 |
 | **定时关机** | 15 分 / 30 分 / 1 小时 / 1.5 小时，还能设「**播完就停**」；到点前 20 秒**音量缓缓收小**再停，不惊醒人 —— 听着睡着也不怕 |
 | **断线自愈** | 信号断了**原地自动重接**（1.5 / 3 / 6 / 12 秒各试一次），接得上就接着放，接不上才换台 |
@@ -60,10 +63,11 @@
 
 | 项目 | 说明 |
 |---|---|
-| 形态 | 单个 HTML 文件，约 537 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
+| 形态 | 单个 HTML 文件，约 546 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装 |
 | 播放 | 浏览器原生 `Audio` + 内嵌 hls.js；MP3 直播流与 HLS（m3u8）切片流 |
 | 本地库 | IndexedDB，元数据与二进制分库存放，支持断点续播；**录音也存这里**，要拿到普通音频文件请在「拾藏」点「存文件」导出到下载目录 |
-| 设置 | localStorage 保存，可导出 / 导入 JSON 备份 |
+| 设置 | localStorage 保存，可导出 / 导入 JSON 备份，也能复制成一段文字带走 |
+| 离线 | 装到桌面后由 Service Worker 缓存页面本体与图标（**只缓存自己，不碰任何电台流**）；网络优先，所以更新会立刻生效 |
 | 隐私 | 零采集、零上报、零第三方请求（仅播放时直连电台本身） |
 
 ### 授权
@@ -82,19 +86,22 @@
 
 **https://podcatcher962.github.io/xiandial/**
 
-Works in mobile browsers too — you can "Add to Home Screen" and use it like an app.
+On a phone, open it and tap "**Settings → Install to desktop**": Android and desktop Chrome install it in one step — you get a real icon, no address bar, and the UI still opens offline (favourites, custom stations and your library all live on your device anyway). On iPhone / iPad just follow the prompt: Share → Add to Home Screen. Desktop browsers can "Install as app" too, giving you a standalone window.
 
 ### Features
 
 | Module | Description |
 |---|---|
-| **Stations** | **1131 stations**, grouped by CNR / CRI / local stations (further split into 31 provinces, incl. many prefecture cities) / traffic / news & general / education / opera / storytelling / arts / music / oldies / online-only / TV audio. Picking "local" reveals a second row of 31 province chips — and plenty of prefecture-city stations (Suzhou, Ningbo, Tangshan, Xuzhou …) behind them. **Every station was individually playback-tested in a real browser** |
+| **Stations** | **1120 stations**, grouped by CNR / CRI / local stations (further split into 31 provinces, incl. many prefecture cities) / traffic / news & general / education / opera / storytelling / arts / music / oldies / online-only / TV audio. Picking "local" reveals a second row of 31 province chips — and plenty of prefecture-city stations (Suzhou, Ningbo, Tangshan, Xuzhou …) behind them. **Every station was individually playback-tested in a real browser** |
 | **Library** | Import your own downloaded opera / storytelling audio files (whole folders supported, drag-and-drop). Stored locally in IndexedDB — works offline, resumes where you left off |
 | **Recording** | Press **⏺** on the player bar to record what you are hearing — the button blinks red and shows elapsed time and size. Set a **fixed length** (15 / 30 / 60 min) or "**stop with the sleep timer**", so what you fall asleep to is still there in the morning. Recordings land in **Library** tagged `录音`; play them back, delete them, or tap **Save file** to export one to your downloads folder. Nothing is ever uploaded |
 | **Radio shell** | Wood-grain cabinet, speaker grille and a tuning window whose needle follows the station; a VU meter pulses during playback |
 | **Favourites** | Tap the **☆** on a card — or the **☆** on the player bar, which bookmarks exactly what you are listening to — and the station lands in a dedicated "**Favourites**" category at the top of the list. The player-bar star toggles it on and off at any time |
 | **Recently played** | The app keeps the last 12 stations you listened to (locally only); tap a name to resume, or hit "clear" to wipe the list — favourites are untouched |
-| **Search** | Station name, category and **pinyin** (both initials and full spelling) all searchable — type "hnt" for Henan stations, "pingshu" for storytelling, or "xianggang" for Hong Kong; find any of the 1131 in a second |
+| **Install to desktop** | One tap in Settings installs it as an app: Android and desktop Chrome use the native prompt, iPhone follows Share → Add to Home Screen. No address bar afterwards, and the UI still opens offline |
+| **Per-station volume** | Stations are mastered at wildly different levels — news feeds are often much louder than music ones. With this on, a level you set for one station is **remembered for that station only** and reapplied when you come back to it; turn it off and every station shares one volume |
+| **Portable favourites** | Besides exporting a JSON file, "**Copy backup**" squeezes favourites, custom stations and every setting into a **single block of text** you can paste into notes or a chat; "**Paste restore**" brings it back on another device — the easiest route when a phone has no file manager |
+| **Search** | Station name, category and **pinyin** (both initials and full spelling) all searchable — type "hnt" for Henan stations, "pingshu" for storytelling, or "xianggang" for Hong Kong; find any of the 1120 in a second |
 | **Tuning** | Turn the left/right knobs to change station, the centre knob to toggle play; long-press a card to bookmark too |
 | **Sleep timer** | 15 min / 30 min / 1 h / 1.5 h, plus "**stop after this**"; the volume **fades out over the last 20 seconds** — safe to fall asleep to |
 | **Auto-reconnect** | If the stream drops, the app **retries in place** (1.5 / 3 / 6 / 12 s) and only switches station if it cannot get back |
@@ -125,10 +132,11 @@ Works in mobile browsers too — you can "Add to Home Screen" and use it like an
 
 | Item | Detail |
 |---|---|
-| Form | A single HTML file, ~537 KB (with the embedded hls.js engine), no dependencies, no CDN, no install |
+| Form | A single HTML file, ~546 KB (with the embedded hls.js engine), no dependencies, no CDN, no install |
 | Playback | Native browser `Audio` + embedded hls.js; MP3 live streams and HLS (m3u8) segments |
 | Local library | IndexedDB, metadata and binary stored separately, resume supported |
-| Settings | Saved in localStorage, exportable / importable as JSON |
+| Settings | Saved in localStorage; exportable / importable as JSON, or copied out as a block of text |
+| Offline | Once installed, a Service Worker caches the page itself and its icons (**same-origin only — it never touches any radio stream**); network-first, so updates take effect immediately |
 | Privacy | Zero collection, zero telemetry, zero third-party requests (only direct connections to the stations themselves) |
 
 ### License

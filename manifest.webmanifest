@@ -1,0 +1,24 @@
+{
+  "name": "拾声 XianDial · 网络戏匣子",
+  "short_name": "拾声",
+  "description": "单文件网络收音机。上千个中文电台全部逐台试播，也能把自己下载的戏收进来离线听。不注册、不上传、不采集。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./web/XianDial.html",
+  "scope": "./",
+  "id": "xiandial",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#17120F",
+  "theme_color": "#17120F",
+  "categories": ["music", "entertainment", "utilities"],
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "打开戏匣子", "short_name": "开机", "url": "./web/XianDial.html" }
+  ]
+}

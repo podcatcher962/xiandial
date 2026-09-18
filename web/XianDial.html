@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="拾声">
 <meta name="theme-color" content="#1B1C1F">
 <title>拾声 · 声音里的戏园子</title>
 <style>
@@ -472,12 +479,30 @@ th{background:var(--card2);color:var(--tx)}
     <button data-sk="1">开</button>
     <button data-sk="0">关</button>
   </div>
+  <label class="f">每个台记住各自的音量</label>
+  <div class="seg" id="segPerVol">
+    <button data-pv="1">开</button>
+    <button data-pv="0">关</button>
+  </div>
+  <p class="hint" style="margin:-4px 0 4px">各台录得响轻不一，新闻台常常比音乐台响一截。开着的话，你给某个台调过的音量会单独记住，下次切回来自动用上次那个值；关掉就所有台共用一个音量。</p>
+  <label class="f">装到桌面 / 手机主屏</label>
+  <div class="row">
+    <button class="btn ghost" id="btnInstall">装到桌面</button>
+  </div>
+  <p class="hint" id="installHint">装好之后打开没有地址栏，像本地程序；断网也能打开界面。</p>
   <div class="row" style="margin-top:18px">
     <button class="btn ghost" id="btnExport">导出备份</button>
     <button class="btn ghost" id="btnImport">恢复备份</button>
+    <button class="btn ghost" id="btnCopyBak">复制备份</button>
+    <button class="btn ghost" id="btnPasteBak">粘贴恢复</button>
     <button class="btn ghost" id="btnReset">清空数据</button>
   </div>
   <p class="hint" style="margin-top:10px">所有收藏、自建台、音量与设置都存在这台设备的浏览器里，不会上传到任何服务器。</p>
+  <label class="f" style="margin-top:14px">备份文字（粘到这里，再点下面那个按钮）</label>
+  <textarea id="pasteBox" rows="3" placeholder="把复制出来的那段备份文字粘在这里"></textarea>
+  <div class="row" style="margin-top:8px">
+    <button class="btn ghost" id="btnPasteGo">从这段文字恢复</button>
+  </div>
 </div>
 
 <input type="file" id="fileImportJson" accept=".json" style="display:none">
@@ -840,7 +865,7 @@ var STATIONS=[
   {n:"深圳新闻广播",u:"https://lhttp.qtfm.cn/live/1270/64k.mp3",c:"广东",g:["广东","新闻综合"]},
   {n:"北京音乐广播",u:"https://lhttp.qtfm.cn/live/332/64k.mp3",c:"北京·音乐",g:["北京","音乐"]},
   {n:"MY FM全国音乐频道·广州",u:"https://lhttp.qtfm.cn/live/20194/64k.mp3",c:"广东·音乐",g:["广东","音乐"]},
-  {n:"MY FM全国音乐频道——FM106.3  长春少儿与老年生活广播",u:"https://lhttp.qtfm.cn/live/4984/64k.mp3",c:"吉林·音乐",g:["吉林","音乐","怀旧老歌"]},
+  
   {n:"VOK 库尔勒梨城之声 FM105.3",u:"https://lhttp-hw.qtfm.cn/live/20212425/64k.mp3",c:"新疆",g:["新疆","新闻综合"]},
   {n:"朝阳县人民广播电台",u:"https://lhttp.qtfm.cn/live/20212211/64k.mp3",c:"辽宁",g:["辽宁","新闻综合"]},
   {n:"云梦音乐台",u:"https://lhttp.qtfm.cn/live/20500187/64k.mp3",c:"音乐",g:["音乐"]},
@@ -855,7 +880,7 @@ var STATIONS=[
   {n:"广东交通之声",u:"https://lhttp.qtfm.cn/live/1262/64k.mp3",c:"广东·交通",g:["广东","交通台","新闻综合"]},
   {n:"厦门综合广播",u:"https://lhttp.qtfm.cn/live/1737/64k.mp3",c:"福建",g:["福建","新闻综合"]},
   {n:"佛山南海广播",u:"https://radiopull.radiofoshan.com.cn/live/1400820947_BSID_42_audio.m3u8",c:"广东",g:["广东","新闻综合"]},
-  {n:"四川财富生活频道",u:"https://lhttp.qtfm.cn/live/1645/64k.mp3",c:"四川",g:["四川","新闻综合"]},
+  
   {n:"延边朝鲜语新闻综合广播",u:"https://lhttp-hw.qtfm.cn/live/20324/64k.mp3",c:"吉林",g:["吉林","新闻综合"]},
   {n:"北碚综合广播·重庆嘉陵之声FM88.7",u:"https://lhttp-hw.qtfm.cn/live/20211692/64k.mp3",c:"重庆",g:["重庆","新闻综合"]},
   {n:"绵阳综合广播",u:"https://lhttp.qtfm.cn/live/4024/64k.mp3",c:"四川",g:["四川","新闻综合"]},
@@ -877,7 +902,7 @@ var STATIONS=[
   {n:"上海东广新闻资讯广播",u:"https://lhttp.qtfm.cn/live/275/64k.mp3",c:"上海",g:["上海","新闻综合"]},
   {n:"新疆蒙语广播",u:"https://lhttp.qtfm.cn/live/1903/64k.mp3",c:"新疆",g:["新疆","新闻综合"]},
   {n:"杭州城市资讯广播 FM90.7杭州潮流音乐电台",u:"https://lhttp-hw.qtfm.cn/live/15318146/64k.mp3",c:"浙江·音乐",g:["浙江","音乐","新闻综合"]},
-  {n:"广东珠江之声",u:"https://lhttp.qtfm.cn/live/470/64k.mp3",c:"广东",g:["广东","新闻综合"]},
+  
   {n:"绵竹综合广播",u:"https://lhttp.qingting.fm/live/15318098/64k.mp3",c:"四川",g:["四川","新闻综合"]},
   {n:"潮州交通音乐广播",u:"https://lhttp.qingting.fm/live/4594/64k.mp3",c:"广东·交通",g:["广东","交通台","音乐"]},
   {n:"唐山音乐广播",u:"https://lhttp.qtfm.cn/live/4871/64k.mp3",c:"河北·音乐",g:["河北","音乐"]},
@@ -906,7 +931,7 @@ var STATIONS=[
   {n:"上海交通广播",u:"https://lhttp.qtfm.cn/live/266/64k.mp3",c:"上海·交通",g:["上海","交通台"]},
   {n:"信仰广播一套",u:"https://lhttp.qtfm.cn/live/5021977/64k.mp3",c:"新闻综合",g:["新闻综合"]},
   {n:"西安音乐广播",u:"https://stream3.xiancity.cn/4/sd/live.m3u8",c:"陕西·音乐",g:["陕西","音乐"]},
-  {n:"武汉经典音乐广播·岁月悠长，听见好时光",u:"https://lhttp.qtfm.cn/live/1297/64k.mp3",c:"湖北·音乐",g:["湖北","音乐"]},
+  
   {n:"黑龙江生活广播",u:"https://lhttp.qtfm.cn/live/4970/64k.mp3",c:"黑龙江",g:["黑龙江","新闻综合"]},
   {n:"洛阳交通广播",u:"https://lhttp.qtfm.cn/live/1227/64k.mp3",c:"河南·交通",g:["河南","交通台"]},
   {n:"轮台之声",u:"https://lhttp-hw.qtfm.cn/live/20500099/64k.mp3",c:"新疆",g:["新疆","新闻综合"]},
@@ -951,7 +976,7 @@ var STATIONS=[
   {n:"FM100.8 包河之声",u:"https://lhttp-hw.qtfm.cn/live/5022668/64k.mp3",c:"安徽",g:["安徽","新闻综合"]},
   {n:"亳州交通音乐广播",u:"https://zbbf2.ahbztv.com/live/41c.m3u8",c:"安徽·交通",g:["安徽","交通台","音乐"]},
   {n:"运城金荔枝经典流行音乐广播电台",u:"https://lhttp-hw.qtfm.cn/live/15318194/64k.mp3",c:"山西·音乐",g:["山西","音乐"]},
-  {n:"昆明汽车广播",u:"https://lhttp.qtfm.cn/live/1936/64k.mp3",c:"云南·交通",g:["云南","交通台"]},
+  
   {n:"京津冀之声",u:"https://lhttp.qtfm.cn/live/5022463/64k.mp3",c:"新闻综合",g:["新闻综合"]},
   {n:"石家庄音乐广播",u:"https://lhttp.qtfm.cn/live/1654/64k.mp3",c:"河北·音乐",g:["河北","音乐"]},
   {n:"宜春新闻综合广播 FM101.1",u:"https://liveds-yc.newsyc.com/fmmf/sd/live.m3u8",c:"江西",g:["江西","新闻综合"]},
@@ -1136,7 +1161,7 @@ var STATIONS=[
   {n:"霸州市融媒体中心综合广播",u:"https://lhttp-hw.qtfm.cn/live/20211658/64k.mp3",c:"河北",g:["河北","新闻综合"]},
   {n:"FM98.3如皋人民广播电台",u:"https://lhttp-hw.qtfm.cn/live/20207734/64k.mp3",c:"江苏",g:["江苏","新闻综合"]},
   {n:"邳州人民广播电台",u:"https://lhttp.qtfm.cn/live/2809/64k.mp3",c:"江苏",g:["江苏","新闻综合"]},
-  {n:"崂山921",u:"https://lhttp.qtfm.cn/live/2806/64k.mp3",c:"山东",g:["山东","新闻综合"]},
+  
   {n:"临沂音乐科教广播",u:"https://lhttp-hw.qtfm.cn/live/4017/64k.mp3",c:"山东·教育",g:["山东","教育台","音乐"]},
   {n:"漯河综合广播mp3",u:"https://lhttp-hw.qtfm.cn/live/5022660/64k.mp3",c:"河南",g:["河南","新闻综合"]},
   {n:"天津新闻广播",u:"https://lhttp-hw.qtfm.cn/live/5022134/64k.mp3",c:"天津",g:["天津","新闻综合"]},
@@ -1155,7 +1180,7 @@ var STATIONS=[
   {n:"黄山旅游广播",u:"https://lhttp-hw.qtfm.cn/live/1969/64k.mp3",c:"安徽",g:["安徽","新闻综合"]},
   {n:"益阳综合广播",u:"https://lhttp.qingting.fm/live/20314/64k.mp3",c:"湖南",g:["湖南","新闻综合"]},
   {n:"包头综合广播",u:"https://lhttp.qingting.fm/live/1889/64k.mp3",c:"内蒙古",g:["内蒙古","新闻综合"]},
-  {n:"幸福956 大连新城乡广播",u:"https://lhttp.qtfm.cn/live/1089/64k.mp3",c:"辽宁",g:["辽宁","新闻综合"]},
+  
   {n:"宁海新闻综合广播 FM98.9",u:"https://lhttp-hw.qtfm.cn/live/5022406/64k.mp3",c:"浙江",g:["浙江","新闻综合"]},
   {n:"威远综合广播",u:"https://lhttp-hw.qtfm.cn/live/20500102/64k.mp3",c:"四川",g:["四川","新闻综合"]},
   {n:"长春经济广播U FM88.0",u:"https://lhttp.qtfm.cn/live/4850/64k.mp3",c:"吉林",g:["吉林","新闻综合"]},
@@ -1214,7 +1239,7 @@ var STATIONS=[
   {n:"沈阳新闻广播",u:"https://lhttp.qtfm.cn/live/20024/64k.mp3",c:"辽宁",g:["辽宁","新闻综合"]},
   {n:"泸州综合广播",u:"https://lhttp-hw.qtfm.cn/live/5021557/64k.mp3",c:"四川",g:["四川","新闻综合"]},
   {n:"China Radio-5 少儿频道",u:"https://lhttp-hw.qtfm.cn/live/20500038/64k.mp3?",c:"新闻综合",g:["新闻综合"]},
-  {n:"中山環保旅遊之聲",u:"https://lhttp.qingting.fm/live/1278/64k.mp3",c:"广东",g:["广东","新闻综合"]},
+  {n:"中山电台快乐888",u:"https://lhttp.qingting.fm/live/1278/64k.mp3",c:"广东",g:["广东","新闻综合"]},
   {n:"深圳生活廣播",u:"https://lhttp.qtfm.cn/live/1273/64k.mp3",c:"广东",g:["广东","新闻综合"]},
   {n:"丹阳市融媒体中心综合广播 FM97.9 丹阳之声",u:"https://lhttp-hw.qtfm.cn/live/20207749/64k.mp3",c:"江苏",g:["江苏","新闻综合"]},
   {n:"南安市广播电视台综合广播",u:"https://lhttp-hw.qtfm.cn/live/5021731/64k.mp3",c:"福建",g:["福建","新闻综合"]},
@@ -1268,7 +1293,7 @@ var STATIONS=[
   {n:"淮安交通文艺",u:"https://lhttp.qtfm.cn/live/4586/64k.mp3",c:"江苏·交通",g:["江苏","交通台","文艺"]},
   {n:"淮安经济生活",u:"https://lhttp.qtfm.cn/live/4587/64k.mp3",c:"江苏",g:["江苏","新闻综合"]},
   {n:"邯郸音乐广播",u:"https://lhttp.qtfm.cn/live/4601/64k.mp3",c:"河北·音乐",g:["河北","音乐"]},
-  {n:"武汉交通广播",u:"https://lhttp.qtfm.cn/live/4665/64k.mp3",c:"湖北·交通",g:["湖北","交通台"]},
+  
   {n:"投资传媒（股市广播）",u:"https://lhttp.qtfm.cn/live/4847/64k.mp3",c:"广东",g:["广东","新闻综合"]},
   {n:"天长人民广播电台",u:"https://lhttp.qtfm.cn/live/4854/64k.mp3",c:"安徽",g:["安徽","新闻综合"]},
   {n:"乐山音乐交通广播FM100.5",u:"https://lhttp.qtfm.cn/live/4864/64k.mp3",c:"四川·交通",g:["四川","交通台","音乐"]},
@@ -1331,7 +1356,7 @@ var STATIONS=[
   {n:"珠海电台先锋951",u:"https://lhttp.qtfm.cn/live/1274/64k.mp3",c:"广东",g:["广东","新闻综合"]},
   {n:"鹤山电台",u:"https://lhttp.qtfm.cn/live/1286/64k.mp3",c:"广东",g:["广东","新闻综合"]},
   {n:"黄冈新闻综合广播",u:"https://lhttp.qtfm.cn/live/1301/64k.mp3",c:"湖北",g:["湖北","新闻综合"]},
-  {n:"襄阳之声",u:"https://lhttp.qtfm.cn/live/1307/64k.mp3",c:"湖北",g:["湖北","新闻综合"]},
+  
   {n:"襄阳交通音乐广播",u:"https://lhttp.qtfm.cn/live/1308/64k.mp3",c:"湖北·交通",g:["湖北","交通台","音乐"]},
   {n:"荆州广播电视台90.1汽车广播",u:"https://lhttp.qtfm.cn/live/1312/64k.mp3",c:"湖北·交通",g:["湖北","交通台"]},
   {n:"西安交通广播",u:"https://lhttp.qtfm.cn/live/1611/64k.mp3",c:"陕西·交通",g:["陕西","交通台"]},
@@ -1358,7 +1383,7 @@ var STATIONS=[
   {n:"吉林市交通台 FM939",u:"https://lhttp.qtfm.cn/live/1819/64k.mp3",c:"吉林·交通",g:["吉林","交通台"]},
   {n:"吉林市广播电视台经济广播",u:"https://lhttp.qtfm.cn/live/1823/64k.mp3",c:"吉林",g:["吉林","新闻综合"]},
   {n:"宁夏交通广播",u:"https://lhttp.qtfm.cn/live/1840/64k.mp3",c:"宁夏·交通",g:["宁夏","交通台"]},
-  {n:"海南旅游广播•国际旅游岛之声",u:"https://lhttp.qtfm.cn/live/1862/64k.mp3",c:"海南",g:["海南","新闻综合"]},
+  
   {n:"内蒙古蒙古语广播",u:"https://lhttp.qtfm.cn/live/1882/64k.mp3",c:"内蒙古",g:["内蒙古","新闻综合"]},
   {n:"内蒙古新闻综合广播",u:"https://lhttp.qtfm.cn/live/1883/64k.mp3",c:"内蒙古",g:["内蒙古","新闻综合"]},
   {n:"包头交通广播",u:"https://lhttp.qtfm.cn/live/1890/64k.mp3",c:"内蒙古·交通",g:["内蒙古","交通台"]},
@@ -1383,7 +1408,7 @@ var STATIONS=[
   {n:"常熟广播声动1008",u:"https://lhttp.qtfm.cn/live/2791/64k.mp3",c:"江苏",g:["江苏","新闻综合"]},
   {n:"常熟新闻广播",u:"https://lhttp.qtfm.cn/live/2792/64k.mp3",c:"江苏",g:["江苏","新闻综合"]},
   {n:"常州经济广播",u:"https://lhttp.qtfm.cn/live/2794/64k.mp3",c:"江苏",g:["江苏","新闻综合"]},
-  {n:"常州新闻广播",u:"https://lhttp.qtfm.cn/live/2798/64k.mp3",c:"江苏",g:["江苏","新闻综合"]},
+  
   {n:"常州音乐广播",u:"https://lhttp.qtfm.cn/live/2799/64k.mp3",c:"江苏·音乐",g:["江苏","音乐"]},
   {n:"扬州交通广播",u:"https://lhttp.qtfm.cn/live/2804/64k.mp3",c:"江苏·交通",g:["江苏","交通台"]},
   {n:"扬州YESFM949",u:"https://lhttp.qtfm.cn/live/2805/64k.mp3",c:"江苏",g:["江苏","新闻综合"]},
@@ -1672,6 +1697,7 @@ var KEY='xixiazi.v1';                   // 键名固定，别改，改了老用�
 var S={
   theme:'dark', ui:1, tap:38, motion:'full',
   vol:0.7, sleepMin:0, resume:1, skip:1, recMin:0,
+  perVol:1, vols:{},                    // 每个台各自的音量（perVol=1 时生效）
   cur:null, fav:[], custom:[], hist:[], lastCat:'全部', lastProv:'全国'
 };
 
@@ -1683,6 +1709,8 @@ function load(){
   if(S.fav==null) S.fav=[];
   if(S.custom==null) S.custom=[];
   if(S.hist==null) S.hist=[];
+  if(S.vols==null) S.vols={};
+  if(S.perVol==null) S.perVol=1;
 }
 function save(){
   try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
@@ -1948,7 +1976,7 @@ function tryPlay(){
   var url=P.vs[P.vi];
   if(!url){ P.state='error'; setNow(); toast('这个台连不上，换一个试试'); nextStation(); return; }
   stopAudio();
-  audio.volume=S.vol;
+  applyVol(P.url);
   var viaHls=(isHls(url) && !HLS_NATIVE && hlsStart(url, fail));
   if(!viaHls){ audio.src=url; }
   var done=false;
@@ -2120,14 +2148,35 @@ function setSleep(min){
   }, 1000);
 }
 
-/* 音量 */
+/* 音量
+   ──────────────────────────────────────────────────────
+   各台的录制电平差别很大：新闻台常常比音乐台响一截，
+   来回换台就得反复拧。所以每个台可以各自记住一个音量——
+   调过就存下来，下次切回这个台自动用上次那个值。
+   S.vol 仍然是「全局默认」，没单独调过的台都用它。
+   ────────────────────────────────────────────────────── */
+function volOf(u){
+  if(!S.perVol || !u || !S.vols) return S.vol;
+  var v=S.vols[u];
+  return (typeof v==='number' && v>=0 && v<=1) ? v : S.vol;
+}
+function paintVol(v){                     // 只画，不动数据
+  var m=$('volMeter'); if(m) m.style.width=(v*100)+'%';
+  var rot=-118+v*236;                     // 两个旋钮同步指示音量
+  var a=$('knobPrev'), b=$('knobNext');
+  if(a) a.style.setProperty('--rot', rot+'deg');
+  if(b) b.style.setProperty('--rot', rot+'deg');
+}
+function applyVol(u){                     // 切台时套用这个台的音量
+  var v=volOf(u);
+  audio.volume=v; paintVol(v);
+  return v;
+}
 function setVol(v){
-  S.vol=Math.max(0, Math.min(1, v));
-  audio.volume=S.vol; save();
-  $('volMeter').style.width=(S.vol*100)+'%';
-  var rot=-118+S.vol*236;                 // 两个旋钮同步指示音量
-  $('knobPrev').style.setProperty('--rot', rot+'deg');
-  $('knobNext').style.setProperty('--rot', rot+'deg');
+  v=Math.max(0, Math.min(1, v));
+  S.vol=v;                                // 当作「新台默认音量」
+  if(S.perVol && P.url && S.vols) S.vols[P.url]=v;
+  audio.volume=v; save(); paintVol(v);
 }
 
 /* ══════════════════════════════════════════════════════
@@ -2909,7 +2958,7 @@ function viewAbout(){
   '<h3>技术说明</h3>'+
   '<table>'+
   '<tr><th>项目</th><th>说明</th></tr>'+
-  '<tr><td>形态</td><td>单个 HTML 文件，约 537 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装</td></tr>'+
+  '<tr><td>形态</td><td>单个 HTML 文件，约 546 KB（内嵌 hls.js 播放引擎），无依赖、无 CDN、无联网安装</td></tr>'+
   '<tr><td>播放</td><td>浏览器原生 Audio + 内嵌 hls.js（安卓 Chrome 也能播 HLS）；MP3 与 m3u8 直播流</td></tr>'+
   '<tr><td>内置台</td><td>'+STATIONS.length+' 个电台，按央广 / 国广 / 地方台（再分 31 省） / 交通台 / 新闻综合 / 教育台 / 戏曲 / 说书 / 文艺 / 音乐 / 怀旧老歌 / 网络台 / 电视伴音分类，全部逐台试播验证</td></tr>'+
   '<tr><td>本地库</td><td>IndexedDB 存储，元数据与二进制分开存放，支持断点续播与顺序连播</td></tr>'+
@@ -2918,7 +2967,8 @@ function viewAbout(){
   '<tr><td>断线</td><td>信号断了先原地重连 4 次（间隔递增），仍不行才自动跳台</td></tr>'+
   '<tr><td>定时</td><td>15 分 / 30 分 / 1 小时 / 1.5 小时后关机，到点前 20 秒音量渐弱；也支持「播完一段就停」</td></tr>'+
   '<tr><td>录音</td><td>边听边录：优先直收原流（.mp3，音质原样），不行则采音转 opus（.webm）；可定时长、可跟着定时关机一起停；录完自动进「拾藏 · 录音」，随时回听</td></tr>'+
-  '<tr><td>设置</td><td>localStorage 保存，可导出 / 导入 JSON 备份</td></tr>'+
+  '<tr><td>音量</td><td>每个台可各自记住音量，换个台不用重新调；也可以关掉，所有台共用一个</td></tr>'+
+  '<tr><td>设置</td><td>localStorage 保存，可导出 / 导入 JSON 备份（也能复制成一段文字带走）</td></tr>'+
   '<tr><td>隐私</td><td>零采集、零上报、零第三方请求（仅播放时直连电台本身）</td></tr>'+
   '</table>'+
   '<h3>授权</h3>'+
@@ -3019,6 +3069,7 @@ function applyAll(){
   syncSeg('segRec','data-rc',String(S.recMin||0));
   syncSeg('segResume','data-rs',String(S.resume));
   syncSeg('segSkip','data-sk',String(S.skip));
+  syncSeg('segPerVol','data-pv',String(S.perVol));
 }
 function syncSeg(id, attr, val){
   var box=$(id); if(!box) return;
@@ -3029,9 +3080,111 @@ function syncSeg(id, attr, val){
 }
 function openSheet(v){ $('sheet').classList.toggle('on', v); $('mask').classList.toggle('on', v); }
 
+/* ══════════════════════════════════════════════════════
+   装到桌面 / 手机主屏
+   ──────────────────────────────────────────────────────
+   安卓与桌面 Chrome：浏览器抛出 beforeinstallprompt，接住它就能
+   一键装（系统自己弹确认框），装完桌面出现图标、打开没有地址栏。
+   iOS 的 Safari 没有这个接口，只能教用户点「分享 → 添加到主屏幕」。
+   ────────────────────────────────────────────────────── */
+var IP=null;
+var IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+           (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+function installed(){
+  return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) ||
+         navigator.standalone===true;
+}
+function isFileMode(){ return location.protocol==='file:'; }
+/* 桌面版（exe）里，本地微型服务会在 head 注入 window.__XIAN_APP__=1。
+   那种情况下窗口本来就是独立的，不需要也不能再「装到桌面」。 */
+function isAppMode(){ return window.__XIAN_APP__===1; }
+function syncInstall(){
+  var b=$('btnInstall'), h=$('installHint');
+  if(!b) return;
+  if(isAppMode()){
+    b.textContent='已在电脑桌面版里'; b.disabled=true;
+    if(h) h.textContent='这一份就是电脑桌面版（exe），窗口独立、没有地址栏，不用再装。手机上要装请用在线版。';
+    return;
+  }
+  if(installed()){
+    b.textContent='已经装上了'; b.disabled=true;
+    if(h) h.textContent='从桌面图标打开的就是它，和这里共用同一份数据。';
+    return;
+  }
+  b.disabled=false;
+  if(isFileMode()){
+    b.textContent='装到桌面';
+    if(h) h.textContent='这一份是从本地文件打开的，装不了。要装请用在线版。';
+    return;
+  }
+  if(IS_IOS){
+    b.textContent='装到手机主屏';
+    if(h) h.textContent='iPhone / iPad 上要手动加：Safari 底部点「分享」，再选「添加到主屏幕」。';
+    return;
+  }
+  b.textContent='装到桌面';
+  if(h) h.textContent= IP
+    ? '点一下，系统会弹出确认；装完桌面就有图标了。'
+    : '浏览器还没给出安装入口。可先关掉面板稍等再回来，或从浏览器菜单里挑「安装应用 / 添加到主屏幕」。';
+}
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault(); IP=e; syncInstall();
+});
+window.addEventListener('appinstalled', function(){
+  IP=null; syncInstall(); toast('装好了，回桌面找「拾声」');
+});
+function doInstall(){
+  if(isAppMode()){ toast('这一份就是电脑桌面版，不用装'); return; }
+  if(installed()){ toast('已经装上了'); return; }
+  if(IP){
+    IP.prompt();
+    IP.userChoice.then(function(r){
+      IP=null; syncInstall();
+      if(r && r.outcome==='accepted') toast('正在装，稍等桌面出现图标');
+    }, function(){ IP=null; syncInstall(); });
+    return;
+  }
+  if(IS_IOS){ toast('Safari 底部点「分享」，再选「添加到主屏幕」', 5200); return; }
+  if(isFileMode()){ toast('本地文件装不了，请用在线版', 4200); return; }
+  toast('从浏览器菜单里找「安装应用」或「添加到主屏幕」', 5200);
+}
+
+syncInstall();          // 打开先看一眼是不是已经装过了 / 能不能装
+
 /* 导出 / 导入 */
+/* 备份本体：一段 JSON，文件带得走，文字也贴得走（手机上没有文件管理器时最省事） */
+function backupText(){
+  return JSON.stringify({app:KEY.split('.')[0], v:1, t:Date.now(), s:S});
+}
+function copyBackup(){
+  var txt=backupText();
+  function fallback(){
+    var ta=document.getElementById('pasteBox');
+    if(ta){ openSheet(true); ta.value=txt; ta.select();
+      toast('已经放进下面的框里，长按全选复制'); }
+    else toast('这段设备不让直接写剪贴板，请用「导出备份」存成文件');
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ toast('备份已经复制，粘到微信收藏或备忘录里就行'); }, fallback);
+  }else fallback();
+}
+function pasteBackup(){
+  function fail(){
+    openSheet(true);
+    var ta=document.getElementById('pasteBox');
+    if(ta){ ta.value=''; ta.focus(); toast('这台设备不让读剪贴板，长按上面的框粘贴进去，再点「从这段文字恢复」'); }
+    else toast('读不了剪贴板，请用「恢复备份」选文件');
+  }
+  if(navigator.clipboard && navigator.clipboard.readText){
+    navigator.clipboard.readText().then(function(t){
+      t=(t||'').trim();
+      if(!t){ fail(); return; }
+      importJSON(t);
+    }, fail);
+  }else fail();
+}
 function exportJSON(){
-  var data={app:'xixiazi', v:1, t:Date.now(), s:S};
+  var data={app:KEY.split('.')[0], v:1, t:Date.now(), s:S};
   var blob=new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a');
@@ -3045,7 +3198,7 @@ function exportJSON(){
 function importJSON(text){
   var o;
   try{ o=JSON.parse(text); }catch(e){ toast('这个文件读不出来，不是备份文件？'); return; }
-  var s=(o && o.app==='xixiazi' && o.s) ? o.s : (o && o.vol!=null ? o : null);
+  var s=(o && o.app && o.s && typeof o.s==='object') ? o.s : (o && o.vol!=null ? o : null);
   if(!s){ toast('这不是拾声的备份文件'); return; }
   for(var k in s){ if(s.hasOwnProperty(k)) S[k]=s[k]; }
   save(); applyAll(); setVol(S.vol);
@@ -3278,6 +3431,13 @@ document.addEventListener('click', function(e){
     return; }
   var rs=t.getAttribute('data-rs'); if(rs){ S.resume=parseInt(rs,10); save(); applyAll(); return; }
   var sk=t.getAttribute('data-sk'); if(sk){ S.skip=parseInt(sk,10); save(); applyAll(); return; }
+  var pv=t.getAttribute('data-pv'); if(pv){
+    S.perVol=parseInt(pv,10);
+    if(!S.perVol) S.vols={};              // 关掉就把各台的记录清掉，免得以后再开时冒出旧值
+    save(); applyAll();
+    if(P.url) applyVol(P.url);            // 当前在放的这一台立刻生效
+    toast(S.perVol?'每个台各记各的音量':'所有台共用一个音量');
+    return; }
 });
 
 /* 加自建台 */
@@ -3299,6 +3459,23 @@ document.addEventListener('click', function(e){
 document.addEventListener('click', function(e){
   if(!e.target || e.target.id!=='btnImport') return;
   $('fileImportJson').click();
+});
+document.addEventListener('click', function(e){
+  if(!e.target || e.target.id!=='btnCopyBak') return;
+  copyBackup();
+});
+document.addEventListener('click', function(e){
+  if(!e.target || e.target.id!=='btnPasteBak') return;
+  pasteBackup();
+});
+document.addEventListener('click', function(e){
+  if(!e.target || e.target.id!=='btnInstall') return;
+  doInstall();
+});
+document.addEventListener('click', function(e){
+  if(!e.target || e.target.id!=='btnPasteGo') return;
+  var ta=document.getElementById('pasteBox');
+  importJSON((ta&&ta.value||'').trim());
 });
 document.addEventListener('click', function(e){
   if(!e.target || e.target.id!=='btnReset') return;
@@ -3382,7 +3559,21 @@ try{
   VIEW='radio';
   render();
   setNow();
-  if(P.url) setNeedle();
+  if(P.url){ applyVol(P.url); setNeedle(); }   // 续播的那个台用它自己记住的音量
+})();
+
+/* ══════════════════════════════════════════════════════
+   Service Worker：让「装到桌面」之后断网也能打开界面
+   ──────────────────────────────────────────────────────
+   只在 http(s) 下注册 —— 本地双击打开（file://）注册不了，
+   也不影响使用。注册失败静默跳过，不打扰用户。
+   ══════════════════════════════════════════════════════ */
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  if(location.protocol!=='http:' && location.protocol!=='https:') return;
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('../sw.js').catch(function(){});
+  });
 })();
 </script>
 </body>
