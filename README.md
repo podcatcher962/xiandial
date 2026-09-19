@@ -27,6 +27,17 @@
 Windows 10 / 11 双击即用（走系统自带 WebView2 内核）。收藏、最近听过、录音存在 `%LOCALAPPDATA%\XianDial\`，
 和在线版是两套本机存储 —— 换着用互不影响，要搬数据用「复制备份 / 粘贴恢复」。
 
+### 安卓手机版（APK）
+
+想把手机上也装成真正的 App（桌面有图标、没有地址栏、录音能存成文件）：
+
+**https://github.com/podcatcher962/xiandial/releases/latest** → 下载 `XianDial.apk`（约 217 KB）
+
+安卓 5.0 以上，点一下直接装（首次需在系统里允许「安装未知来源应用」）。和桌面版、在线版一样是 **1120 个国内电台**；
+包名 `com.lanlan.xiandial.cn` 与自用版不同，两个版本可以同时装在一台手机上。
+
+装好后，「拾藏」里点 **存文件** 会把录音落到手机 `Download/拾声录音` 目录，直接用别的播放器就能听。
+
 ### 功能
 
 | 模块 | 说明 |
@@ -98,6 +109,26 @@ Windows 10 / 11 双击即用（走系统自带 WebView2 内核）。收藏、最
 **https://podcatcher962.github.io/xiandial/**
 
 On a phone, open it and tap "**Settings → Install to desktop**": Android and desktop Chrome install it in one step — you get a real icon, no address bar, and the UI still opens offline (favourites, custom stations and your library all live on your device anyway). On iPhone / iPad just follow the prompt: Share → Add to Home Screen. Desktop browsers can "Install as app" too, giving you a standalone window.
+
+### Windows desktop app
+
+Prefer double-clicking an icon on your PC (no browser, standalone window, more complete recording)?
+
+**https://github.com/podcatcher962/xiandial/releases/latest** → download `XianDial.exe` (~20 MB, no install)
+
+> The release asset uses the ASCII name `XianDial.exe`; it is the same file as the Chinese-named 拾声.exe.
+
+Works on Windows 10 / 11 out of the box (uses the system WebView2 runtime). Favourites, history and recordings live in `%LOCALAPPDATA%\XianDial\` — a local store separate from the web version, so the two do not interfere; use "Copy backup / Paste restore" to move data between them.
+
+### Android app (APK)
+
+Want a real app on your phone (home-screen icon, no address bar, recordings saved as files)?
+
+**https://github.com/podcatcher962/xiandial/releases/latest** → download `XianDial.apk` (~217 KB)
+
+Android 5.0+ — tap to install (you may need to allow "install from unknown sources" the first time). Same **1120 mainland-China stations** as the desktop and web versions; the package name differs from the personal build, so both can be installed side by side.
+
+After installing, tapping **Save file** in the Library writes recordings to `Download/拾声录音` on the phone, ready for any other player.
 
 ### Features
 
