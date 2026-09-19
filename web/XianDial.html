@@ -2188,7 +2188,7 @@ function setVol(v){
       音质就是电台原样，产物是 .mp3 / .aac，哪儿都能放，也最省电。
       前提是这条流允许跨域（服务端给得出 Access-Control-Allow-Origin）。
 
-   ②「采音重编」——从播放器上把声音采下来，转成 opus（.webm，64 kbps）。
+   ②「采音重编」——从播放器上把声音采下来，重编成 AAC（.m4a，96 kbps）。
       给 HLS（m3u8）那种拉分片的台用，也当①走不通时的兜底。
       实测：采到的声音与扬声器音量无关，所以定时关机的音量渐弱
       不会把录音也一起淡掉。
@@ -2197,7 +2197,7 @@ function setVol(v){
    ══════════════════════════════════════════════════════ */
 var REC={on:false, t0:0, timer:null, engine:'', mr:null, chunks:[], aborter:null,
          bytes:0, name:'', plan:0, started:false, wantSave:false, done:false, endMs:0,
-         parts:null, rawTotal:0};
+         parts:null, rawTotal:0, noAac:false, fmtX:'.m4a', fmtM:'audio/mp4'};
 
 function recElapsed(){ return REC.on ? (Date.now()-REC.t0) : (REC.endMs||0); }
 function recClock(ms){
@@ -2246,7 +2246,7 @@ function recStart(){
   REC.name=P.name||'广播'; REC.on=true; REC.t0=Date.now(); REC.bytes=0;
   REC.chunks=[]; REC.mr=null; REC.aborter=null; REC.started=false;
   REC.wantSave=false; REC.done=false; REC.endMs=0; REC.reloading=false;
-  REC.plan=recPlanMs();
+  REC.plan=recPlanMs(); REC.noAac=false;
   recTickStart(); recPaint();
   if(isHls(P.url)) recCapture();
   else recRaw(P.url);
@@ -2315,6 +2315,22 @@ function recWrapUp(){
 }
 
 /* ② 采音重编 */
+/* 采音重编用哪种输出格式：能力检测，别把 mimeType 写死 —— 各家内核版本不一。
+   优先 AAC（.m4a）：手机、电脑自带的播放器都放得出，微信发给别人也能直接预览；
+   不支持再退回 opus（.webm）。返回 [mimeType, 后缀, MIME, 码率]。 */
+function capFmt(noAac){
+  var C = noAac
+    ? [['audio/webm;codecs=opus','.webm','audio/webm',64000],
+       ['audio/webm','.webm','audio/webm',64000]]
+    : [['audio/mp4;codecs=mp4a.40.2','.m4a','audio/mp4',96000],
+       ['audio/mp4','.m4a','audio/mp4',96000],
+       ['audio/webm;codecs=opus','.webm','audio/webm',64000],
+       ['audio/webm','.webm','audio/webm',64000]];
+  for(var i=0;i<C.length;i++){
+    try{ if(MediaRecorder.isTypeSupported(C[i][0])) return C[i]; }catch(e){}
+  }
+  return ['', '.webm', 'audio/webm', 0];
+}
 function recCapture(){ recCap(false); }
 function recCap(reloaded){
   REC.engine='cap';
@@ -2334,14 +2350,15 @@ function recCap(reloaded){
     recFail('这个台录不了——'+(why||'采不到声音'));
     return;
   }
-  var mt='audio/webm;codecs=opus';
-  try{ if(!MediaRecorder.isTypeSupported(mt)) mt=''; }catch(e){ mt=''; }
+  var F=capFmt(REC.noAac);
+  REC.fmtX=F[1]; REC.fmtM=F[2];
   try{
-    REC.mr = mt ? new MediaRecorder(ms,{mimeType:mt, audioBitsPerSecond:64000})
-                : new MediaRecorder(ms);
+    REC.mr = F[0] ? new MediaRecorder(ms,{mimeType:F[0], audioBitsPerSecond:F[3]})
+                  : new MediaRecorder(ms);
   }catch(e){
-    recFail('这个浏览器不支持录音');
-    return;
+    /* 参数不认就退回默认构造，别让录音起不来 */
+    try{ REC.mr=new MediaRecorder(ms); }
+    catch(e2){ recFail('这个浏览器不支持录音'); return; }
   }
   REC.chunks=[];
   REC.mr.ondataavailable=function(e){
@@ -2350,10 +2367,20 @@ function recCap(reloaded){
   REC.mr.onstop=function(){
     /* 不是用户按停（比如流断了）也要收好 */
     if(REC.on){ REC.wantSave=true; REC.endMs=recElapsed(); recWrapUp(); }
-    var blob=new Blob(REC.chunks, {type:'audio/webm'});
-    recFinish(blob, '.webm', 'audio/webm');
+    var blob=new Blob(REC.chunks, {type:REC.fmtM||'audio/webm'});
+    recFinish(blob, REC.fmtX||'.webm', REC.fmtM||'audio/webm');
   };
-  REC.mr.onerror=function(){ recFail('录音中途出错了'); };
+  REC.mr.onerror=function(){
+    /* 有的内核嘴上说支持 AAC、实际录不出东西：换 opus 再试一次 */
+    if(!REC.noAac && !REC.bytes && REC.on){
+      REC.noAac=true;
+      var dead=REC.mr; REC.mr=null;
+      try{ dead.onstop=null; dead.onerror=null; dead.stop(); }catch(e){}
+      recCap(reloaded);
+      return;
+    }
+    recFail('录音中途出错了');
+  };
   try{ REC.mr.start(1000); }catch(e){ recFail('录音起不来'); return; }
   REC.started=true;
   recPaint();
@@ -2828,8 +2855,8 @@ function viewHelp(){
   '都设上，录音时长选<b>跟着关机停</b>：到点关机时录音也一起停，那段就留在「拾藏」里等你。</p>'+
   '<p>录音不会变声、不会被音量旋钮影响，你把音量调到多小，录进去的还是原样那一段。</p>'+
   '<p>它自己挑最省的做法：地址本身是 <code>.mp3</code> 就<b>原样收下</b>，产物还是 <code>.mp3</code>，'+
-  '音质与电台一致、体积最小；是 HLS 分片台就<b>采音重编</b>成 <code>.webm</code>'+
-  '（opus <b>64 kbps</b>，跟大多数电台的直播码率相当，<b>一小时约 28 MB</b>）。</p>'+
+  '音质与电台一致、体积最小；是 HLS 分片台就<b>采音重编</b>成 <code>.m4a</code>'+
+  '（AAC <b>96 kbps</b>，手机、电脑、微信都认，<b>一小时约 43 MB</b>）。</p>'+
   '<p>录的东西<b>只在这台设备里</b>，不会上传。它存在浏览器的本地数据库里，'+
   '在系统里搜不到一个独立文件——想留成普通文件，去「拾藏」点那一条的<b>存文件</b>，'+
   '它会落到你的下载目录里。</p>'+
@@ -2966,7 +2993,7 @@ function viewAbout(){
   '<tr><td>搜索</td><td>台名、省份、分类，以及拼音（全拼与首字母都认：henan / nbxw）</td></tr>'+
   '<tr><td>断线</td><td>信号断了先原地重连 4 次（间隔递增），仍不行才自动跳台</td></tr>'+
   '<tr><td>定时</td><td>15 分 / 30 分 / 1 小时 / 1.5 小时后关机，到点前 20 秒音量渐弱；也支持「播完一段就停」</td></tr>'+
-  '<tr><td>录音</td><td>边听边录：优先直收原流（.mp3，音质原样），不行则采音转 opus（.webm）；可定时长、可跟着定时关机一起停；录完自动进「拾藏 · 录音」，随时回听</td></tr>'+
+  '<tr><td>录音</td><td>边听边录：优先直收原流（.mp3，音质原样），不行则采音重编成 AAC（.m4a）；可定时长、可跟着定时关机一起停；录完自动进「拾藏 · 录音」，随时回听</td></tr>'+
   '<tr><td>音量</td><td>每个台可各自记住音量，换个台不用重新调；也可以关掉，所有台共用一个</td></tr>'+
   '<tr><td>设置</td><td>localStorage 保存，可导出 / 导入 JSON 备份（也能复制成一段文字带走）</td></tr>'+
   '<tr><td>隐私</td><td>零采集、零上报、零第三方请求（仅播放时直连电台本身）</td></tr>'+
@@ -3011,7 +3038,7 @@ function importFiles(files){
   var arr=[], total=0;
   for(var i=0;i<files.length;i++){
     var f=files[i];
-    if(f.size>0 && (/\.(mp3|m4a|aac|ogg|opus|wav|flac|wma|mp4|m3u8|ts)$/i.test(f.name) || (f.type||'').indexOf('audio')===0)){
+    if(f.size>0 && (/\.(mp3|m4a|aac|ogg|opus|webm|wav|flac|wma|mp4|m3u8|ts)$/i.test(f.name) || (f.type||'').indexOf('audio')===0)){
       arr.push(f); total+=f.size;
     }
   }
